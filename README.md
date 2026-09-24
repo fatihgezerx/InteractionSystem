@@ -30,8 +30,8 @@ interactable - component, collider, layer and settings included.
   `Open Door` - or leave it empty to show just the name
 - **Hold to interact** per object, with live progress for UI (e.g. a slider) and a timer that resets
   when the key is released or the object loses focus
-- **Two ways to react**: `UnityEvent`s on each `Interactable` for no-code wiring, and `EventManager`
-  events carrying an `InteractionArgs` payload for code
+- **Two ways to react**: `UnityEvent`s on each `Interactable` for no-code wiring, and allocation-free
+  `EventManager` events (`FocusEvent`, `InteractEvent`...) for code
 - **Scene view gizmo**: the line or sphere is drawn yellow while nothing is detected, green while
   something is
 - Drag-to-reorder groups in the Inspector
@@ -41,43 +41,30 @@ interactable - component, collider, layer and settings included.
 ### Requirements
 
 - Unity 2022.3 LTS or newer (developed on Unity 6)
-- [UniTask](https://github.com/Cysharp/UniTask)
-- **The new Input System** (1.8 or newer, for project-wide actions)
-- An **EventSystem** providing `EventManager` and `EventTypes` in an assembly named
-  `EventSystem.Runtime` (see below)
+
+| Dependency | Why |
+|---|---|
+| [EventSystem](https://github.com/fatihgezerx/EventSystem) | Publishes `FocusEvent`, `LoseFocusEvent`, `InteractEvent` and `InteractingEvent` |
+| [UniTask](https://github.com/Cysharp/UniTask) | The detection loop and holds run on UniTask, with no `Update` |
+| **The new Input System** (1.8 or newer, for project-wide actions) | The `Interact` action |
 
 ### Installation
 
-**1. Install the dependencies first.** The system won't compile without them:
+Clone or download this repository, then copy its contents into a folder under `Assets/` (e.g.
+`Assets/Scripts/InteractionSystem/`). The system comes with its own assembly definitions.
 
-- **UniTask**: open `Window > Package Manager`, click `+ > Add package from git URL...` and paste:
-  ```
-  https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
-  ```
-- **Input System**: `Window > Package Manager > Unity Registry > Input System > Install`.
-- **EventSystem**: an `EventManager` / `EventTypes` in an assembly named `EventSystem.Runtime`
-  (see [EventSystem](#eventsystem) below).
+**Importing it never breaks your project.** A small setup script (with no dependencies of its own)
+checks for the packages above. While one is missing, InteractionSystem is simply left out of
+compilation, so there are no errors, and a dialog offers to install what's missing in one click. Once
+everything is installed, the system compiles on its own. Run **Tools > Interaction System > Check
+Dependencies** to check again.
 
-**2. Add InteractionSystem.** Clone or download this repository, then copy its contents into a folder
-under `Assets/` (e.g. `Assets/Scripts/InteractionSystem/`). The system comes with its own assembly
-definitions.
+You can also install the dependencies yourself through `Window > Package Manager > + > Add package
+from git URL...`:
 
-### EventSystem
-
-InteractionSystem publishes its events through an `EventManager` that isn't part of this repository.
-It uses `EventManager.RegisterEvent<T>`, `UnregisterEvent<T>` and `InvokeEvent<T>`, keyed by an
-`EventTypes` enum. Add these four members to your `EventTypes` enum:
-
-```csharp
-public enum EventTypes
-{
-    // ...your own events
-
-    OnFocus,
-    OnLoseFocus,
-    OnInteract,
-    OnInteracting,
-}
+```
+https://github.com/fatihgezerx/EventSystem.git
+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 ```
 
 ### Input (important)
@@ -158,10 +145,11 @@ Each `Interactable` has three `UnityEvent`s, wired from the Inspector:
 For example, with [PoolSystem](https://github.com/fatihgezerx/PoolSystem), drag a pooled object's
 `Poolable` into **On Interact** and pick `ReleaseSelf` to return it to its pool when interacted with.
 
-The same moments are also published through `EventManager` with an `InteractionArgs` payload
-(`Value` = the `Interactable`):
+The same moments are also published through `EventManager` as `FocusEvent`, `LoseFocusEvent` and
+`InteractEvent`, each carrying the `Interactable` as `Target`. No shared enum has to be edited: the events
+are declared by InteractionSystem itself.
 
-| `args.Value.` | Example | Meaning |
+| `e.Target.` | Example | Meaning |
 |---|---|---|
 | `FullName` | `Open Door` | Group name + object name, ready for UI. Just the name if the group has no name |
 | `Header` | `Open` | The group name alone (may be empty) |
@@ -169,14 +157,11 @@ The same moments are also published through `EventManager` with an `InteractionA
 | `Holding` / `HoldDuration` | `true` / `2` | Hold settings |
 
 ```csharp
-private void OnEnable()  => EventManager.RegisterEvent<InteractionArgs>(EventTypes.OnFocus, OnFocus);
-private void OnDisable() => EventManager.UnregisterEvent<InteractionArgs>(EventTypes.OnFocus, OnFocus);
+private void OnEnable()  => EventManager.Register<FocusEvent>(OnFocus);
+private void OnDisable() => EventManager.Unregister<FocusEvent>(OnFocus);
 
-private void OnFocus(InteractionArgs args) => promptLabel.text = args.Value.FullName; // "Open Door"
+private void OnFocus(FocusEvent e) => promptLabel.text = e.Target.FullName; // "Open Door"
 ```
-
-`EventTypes.OnFocus`, `EventTypes.OnLoseFocus`, `EventTypes.OnInteract` and `EventTypes.OnInteracting`
-all use `InteractionArgs`.
 
 ## Holding
 
@@ -184,14 +169,14 @@ For a **Holding** object, Interact must be held for **Duration** seconds. The ti
 key is released or the object loses focus. `On Focus` fires only once per object until it loses
 focus, so moving the aim around on the same object never restarts the timer.
 
-While a Holding object is being held, `EventTypes.OnInteracting` is published with
-`InteractionArgs.Elapsed` = seconds held so far:
+While a Holding object is being held, `InteractingEvent` is published with `Elapsed` = seconds held
+so far:
 - with 0 when the key is pressed,
 - every frame while it is held,
-- with 0 again when the hold ends (key released, focus lost, or completed right after `OnInteract`).
+- with 0 again when the hold ends (key released, focus lost, or completed right after `InteractEvent`).
 
 Example: a hold slider in the UI. The maximum comes from the focused object, the current value from
-`OnInteracting`. No `Update` is needed:
+`InteractingEvent`. No `Update` is needed:
 
 ```csharp
 using EventSystem;
@@ -205,33 +190,32 @@ public class HoldSlider : MonoBehaviour
 
     private void OnEnable()
     {
-        EventManager.RegisterEvent<InteractionArgs>(EventTypes.OnFocus, OnFocus);
-        EventManager.RegisterEvent<InteractionArgs>(EventTypes.OnLoseFocus, OnLoseFocus);
-        EventManager.RegisterEvent<InteractionArgs>(EventTypes.OnInteracting, OnInteracting);
+        EventManager.Register<FocusEvent>(OnFocus);
+        EventManager.Register<LoseFocusEvent>(OnLoseFocus);
+        EventManager.Register<InteractingEvent>(OnInteracting);
     }
 
     private void OnDisable()
     {
-        EventManager.UnregisterEvent<InteractionArgs>(EventTypes.OnFocus, OnFocus);
-        EventManager.UnregisterEvent<InteractionArgs>(EventTypes.OnLoseFocus, OnLoseFocus);
-        EventManager.UnregisterEvent<InteractionArgs>(EventTypes.OnInteracting, OnInteracting);
+        EventManager.Unregister<FocusEvent>(OnFocus);
+        EventManager.Unregister<LoseFocusEvent>(OnLoseFocus);
+        EventManager.Unregister<InteractingEvent>(OnInteracting);
     }
 
-    private void OnFocus(InteractionArgs args)
+    private void OnFocus(FocusEvent e)
     {
-        slider.gameObject.SetActive(args.Value.Holding);
-        slider.maxValue = args.Value.HoldDuration;
+        slider.gameObject.SetActive(e.Target.Holding);
+        slider.maxValue = e.Target.HoldDuration;
         slider.value = 0f;
     }
 
-    private void OnLoseFocus(InteractionArgs args) => slider.gameObject.SetActive(false);
+    private void OnLoseFocus(LoseFocusEvent e) => slider.gameObject.SetActive(false);
 
-    private void OnInteracting(InteractionArgs args) => slider.value = args.Elapsed;
+    private void OnInteracting(InteractingEvent e) => slider.value = e.Elapsed;
 }
 ```
 
-`OnInteracting` reuses one `InteractionArgs` instance to avoid allocating every frame, so never
-keep a reference to it past the callback.
+Every event is a `readonly struct`, so publishing `InteractingEvent` every frame never allocates.
 
 ## License
 

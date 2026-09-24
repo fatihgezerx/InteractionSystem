@@ -11,14 +11,14 @@ namespace InteractionSystem
     /// Static entry point of the interaction system. Call <see cref="Initialize"/> once (e.g. from a
     /// GameManager) with an <see cref="InteractData"/>; from then on detection runs on a cancellable
     /// UniTask loop - no <c>Update</c>, no coroutine - and publishes
-    /// <see cref="EventTypes.OnFocus"/>, <see cref="EventTypes.OnLoseFocus"/> and
-    /// <see cref="EventTypes.OnInteract"/> (plus <see cref="EventTypes.OnInteracting"/> while a Holding
-    /// object is being held) through <see cref="EventManager"/>, alongside the focused
+    /// <see cref="FocusEvent"/>, <see cref="LoseFocusEvent"/> and <see cref="InteractEvent"/> (plus
+    /// <see cref="InteractingEvent"/> while a Holding object is being held) through
+    /// <see cref="EventManager"/>, alongside the focused
     /// <see cref="Interactable"/>'s own UnityEvents.
     /// </summary>
     /// <remarks>
     /// Input comes from the <c>Interact</c> action of the project-wide Input System actions
-    /// (Project Settings &gt; Input System Package). <see cref="EventTypes.OnFocus"/> fires once per
+    /// (Project Settings &gt; Input System Package). <see cref="FocusEvent"/> fires once per
     /// object until it loses focus: re-detecting the same object never re-focuses it, so it never
     /// restarts a hold in progress.
     /// </remarks>
@@ -36,9 +36,6 @@ namespace InteractionSystem
         private static CancellationTokenSource _loopCts;
         private static CancellationTokenSource _holdCts;
         private static Interactable _holdTarget;
-
-        // OnInteracting fires every frame of a hold, so its args are reused instead of allocated.
-        private static readonly InteractionArgs InteractingArgs = new(null);
 
         /// <summary>Whether <see cref="Initialize"/> has been called and detection is running.</summary>
         public static bool IsInitialized => _loopCts != null;
@@ -247,13 +244,13 @@ namespace InteractionSystem
             if (previous != null)
             {
                 previous.LoseFocus();
-                EventManager.InvokeEvent(EventTypes.OnLoseFocus, new InteractionArgs(previous));
+                EventManager.Invoke(new LoseFocusEvent(previous));
             }
 
             if (target != null)
             {
                 target.Focus();
-                EventManager.InvokeEvent(EventTypes.OnFocus, new InteractionArgs(target));
+                EventManager.Invoke(new FocusEvent(target));
             }
         }
 
@@ -332,17 +329,13 @@ namespace InteractionSystem
             }
         }
 
-        private static void PublishInteracting(Interactable target, float elapsed)
-        {
-            InteractingArgs.Value = target;
-            InteractingArgs.Elapsed = elapsed;
-            EventManager.InvokeEvent(EventTypes.OnInteracting, InteractingArgs);
-        }
+        private static void PublishInteracting(Interactable target, float elapsed) =>
+            EventManager.Invoke(new InteractingEvent(target, elapsed));
 
         private static void Interact(Interactable target)
         {
             target.Interact();
-            EventManager.InvokeEvent(EventTypes.OnInteract, new InteractionArgs(target));
+            EventManager.Invoke(new InteractEvent(target));
         }
 
         // Keeps the static state clean when "Enter Play Mode Options" skips the domain reload.

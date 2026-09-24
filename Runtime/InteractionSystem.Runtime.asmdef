@@ -12,7 +12,11 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "HAS_EVENT_SYSTEM",
+        "HAS_UNITASK",
+        "HAS_INPUT_SYSTEM"
+    ],
     "versionDefines": [],
     "noEngineReferences": false
 }

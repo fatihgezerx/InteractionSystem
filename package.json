@@ -1,0 +1,19 @@
+{
+  "name": "com.fatihgezer.interactionsystem",
+  "version": "2.0.0",
+  "displayName": "Interaction System",
+  "description": "Modular, event-driven interaction system: line or sphere detection, press or hold to interact, one-click Compile. Needs Event System and UniTask (offered on import).",
+  "unity": "2022.3",
+  "keywords": [
+    "interaction",
+    "raycast",
+    "input"
+  ],
+  "author": {
+    "name": "Fatih Gezer",
+    "url": "https://github.com/fatihgezerx"
+  },
+  "dependencies": {
+    "com.unity.inputsystem": "1.8.0"
+  }
+}

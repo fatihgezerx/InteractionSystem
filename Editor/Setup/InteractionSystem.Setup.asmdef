@@ -1,9 +1,7 @@
 {
-    "name": "InteractionSystem.Editor",
-    "rootNamespace": "InteractionSystem",
-    "references": [
-        "InteractionSystem.Runtime"
-    ],
+    "name": "InteractionSystem.Setup",
+    "rootNamespace": "InteractionSystem.Setup",
+    "references": [],
     "includePlatforms": [
         "Editor"
     ],
@@ -12,11 +10,7 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [
-        "HAS_EVENT_SYSTEM",
-        "HAS_UNITASK",
-        "HAS_INPUT_SYSTEM"
-    ],
+    "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false
 }
