@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23c5c405bcb608842bcb25a7d81bf8b9, type: 3}
+  m_Name: InteractData
+  m_EditorClassIdentifier: InteractionSystem.Runtime::InteractionSystem.InteractData
+  generalSettings:
+    raycastType: 1
+    originTag: Player
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotation: {x: 0, y: 0, z: 0}
+    inChild: 0
+    childCount: 0
+    radius: 1.5
+    checkInterval: 0.1
+    raycastLayers:
+      serializedVersion: 2
+      m_Bits: 328
+  groups:
+  - header: Interact
+    interactables:
+    - displayName: Sphere
+      prefab: {fileID: 2268831741385135292, guid: c554a840c14a0d4469297ab66392cccf, type: 3}
+      holding: 0
+      duration: 0
