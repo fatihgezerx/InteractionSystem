@@ -59,11 +59,13 @@ compilation, so there are no errors, and a dialog offers to install what's missi
 everything is installed, the system compiles on its own. Run **Tools > Interaction System > Check
 Dependencies** to check again.
 
-You can also install the dependencies yourself through `Window > Package Manager > + > Add package
-from git URL...`:
+EventSystem is downloaded into `Assets/Scripts/EventSystem/`, exactly as if you had copied it there, so
+its files stay visible and editable. UniTask and the Input System are installed through the Package
+Manager. To install them yourself instead: copy [EventSystem](https://github.com/fatihgezerx/EventSystem)
+into `Assets/Scripts/EventSystem/`, and add UniTask in `Window > Package Manager > + > Add package from
+git URL...` with:
 
 ```
-https://github.com/fatihgezerx/EventSystem.git
 https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 ```
 
