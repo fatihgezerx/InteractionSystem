@@ -1,0 +1,35 @@
+#if HAS_INTERACTION_SYSTEM && HAS_UNIMVC && HAS_EVENT_SYSTEM && HAS_UNITASK && HAS_INPUT_SYSTEM
+using UniMVC;
+
+namespace InteractionSystem.UI
+{
+    /// <summary>
+    /// The <see cref="InteractionPopup"/>'s hold progress: shown only for a Holding object, it fills from 0
+    /// to 1 over the object's Duration while Interact is held, and empties when the hold ends. It follows
+    /// <see cref="InteractingEvent"/>, whose timer already runs in <see cref="InteractionManager"/>, so it
+    /// needs no tween or loop of its own and can never drift from the real hold.
+    /// </summary>
+    public sealed class InteractionSlider : SliderViewBase
+    {
+        private float _inverseDuration;
+
+        protected override void OnInitialize()
+        {
+            base.OnInitialize();
+            Slider.minValue = 0f;
+            SetValue(0f, 1f);
+        }
+
+        /// <summary>Shows the slider empty for a Holding <paramref name="target"/>, hides it otherwise.</summary>
+        public void SetTarget(Interactable target)
+        {
+            _inverseDuration = target.HoldDuration > 0f ? 1f / target.HoldDuration : 0f;
+            SetValue(0f);
+            SetVisible(target.Holding);
+        }
+
+        /// <summary>Fills the slider to <paramref name="elapsed"/> out of the target's Duration.</summary>
+        public void SetElapsed(float elapsed) => SetValue(elapsed * _inverseDuration);
+    }
+}
+#endif

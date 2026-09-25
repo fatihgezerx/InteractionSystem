@@ -5,11 +5,12 @@ namespace InteractionSystem.UI
 {
     /// <summary>
     /// The prompt shown while an <see cref="Interactable"/> is focused, e.g. "Open Door". Opened and closed
-    /// by the <see cref="InteractionController"/>; list its <see cref="InteractionText"/> under its Texts.
+    /// by the <see cref="InteractionController"/>; list its <see cref="InteractionText"/> under its Texts and,
+    /// for Holding objects, its <see cref="InteractionSlider"/> under its Sliders. Both are optional.
     /// </summary>
     public sealed class InteractionPopup : PopupViewBase
     {
-        /// <summary>Writes <paramref name="target"/>'s name into the popup's text and shows the popup.</summary>
+        /// <summary>Fills the popup with <paramref name="target"/> and shows it.</summary>
         public void Open(Interactable target)
         {
             if (UI.TryGet<InteractionText>(out var text))
@@ -17,7 +18,21 @@ namespace InteractionSystem.UI
                 text.SetTarget(target);
             }
 
+            if (UI.TryGet<InteractionSlider>(out var slider))
+            {
+                slider.SetTarget(target);
+            }
+
             Show();
+        }
+
+        /// <summary>Fills the hold slider to <paramref name="elapsed"/> seconds held.</summary>
+        public void SetElapsed(float elapsed)
+        {
+            if (UI.TryGet<InteractionSlider>(out var slider))
+            {
+                slider.SetElapsed(elapsed);
+            }
         }
     }
 }

@@ -180,18 +180,25 @@ they never cause errors.
 
 | File | Base | What it does |
 |---|---|---|
-| `Controllers/InteractionController` | `ControllerBase` | Listens to `FocusEvent` / `LoseFocusEvent` and opens / closes the popup |
+| `Controllers/InteractionController` | `ControllerBase` | Listens to `FocusEvent` / `LoseFocusEvent` / `InteractingEvent` and opens / closes / fills the popup |
 | `Popups/InteractionPopup` | `PopupViewBase` | The prompt: filled with the focused object and shown on focus, hidden on lose focus |
 | `Texts/InteractionText` | `TextViewBase` | The prompt's label: the object's Name (`Take Battery`), translated with LocalizationSystem |
+| `Sliders/InteractionSlider` | `SliderViewBase` | The hold progress: shown only for Holding objects, fills from 0 to 1 over their Duration |
 
 **Setup:**
 
 1. Put `InteractionController` on the Canvas that has the `UIManager`.
 2. Create the popup under the Canvas: an object with `InteractionPopup`, and inside it a TextMeshPro text
-   with `InteractionText`. Leave the popup inactive.
+   with `InteractionText` and, if you use Holding objects, a Slider with `InteractionSlider`. The slider's
+   range is set to 0-1 by code. Leave the popup inactive.
 3. Press **Collect From Children** on the popup and on the `UIManager`: the text goes into the popup's
-   Texts, the popup into the `UIManager`'s Popups and the controller into its Controllers.
+   Texts, the slider into its Sliders, the popup into the `UIManager`'s Popups and the controller into its
+   Controllers.
 4. Call `UIManager.Initialize()` from your bootstrap code.
+
+`InteractionSlider` needs no tween or loop of its own: it follows `InteractingEvent`, whose timer already
+runs in `InteractionManager` (see [Holding](#holding)), so it always matches the real hold and empties as
+soon as the key is released or the object loses focus.
 
 The popup can also sit inside another panel's list, but if it is inside that panel in the hierarchy
 too, it only becomes visible while that panel is open.
@@ -221,7 +228,8 @@ so far:
 - every frame while it is held,
 - with 0 again when the hold ends (key released, focus lost, or completed right after `InteractEvent`).
 
-Example: a hold slider in the UI. The maximum comes from the focused object, the current value from
+With UniMVC, `InteractionSlider` (see [UI](#ui)) already does this. Without it, for example a hold
+slider in your own UI: the maximum comes from the focused object, the current value from
 `InteractingEvent`. No `Update` is needed:
 
 ```csharp

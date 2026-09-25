@@ -5,9 +5,9 @@ using UniMVC;
 namespace InteractionSystem.UI
 {
     /// <summary>
-    /// The interaction system's link to the UI: the only place that listens to its focus events, passing
-    /// them on to the <see cref="InteractionPopup"/>. It sits on the <see cref="UIManager"/>'s object, which
-    /// is always active, so no focus change is missed while the popup is closed.
+    /// The interaction system's link to the UI: the only place that listens to its focus and hold events,
+    /// passing them on to the <see cref="InteractionPopup"/>. It sits on the <see cref="UIManager"/>'s object,
+    /// which is always active, so no focus change is missed while the popup is closed.
     /// </summary>
     public sealed class InteractionController : ControllerBase
     {
@@ -15,12 +15,14 @@ namespace InteractionSystem.UI
         {
             EventManager.Register<FocusEvent>(OnFocus);
             EventManager.Register<LoseFocusEvent>(OnLoseFocus);
+            EventManager.Register<InteractingEvent>(OnInteracting);
         }
 
         private void OnDestroy()
         {
             EventManager.Unregister<FocusEvent>(OnFocus);
             EventManager.Unregister<LoseFocusEvent>(OnLoseFocus);
+            EventManager.Unregister<InteractingEvent>(OnInteracting);
         }
 
         private void OnFocus(FocusEvent e)
@@ -36,6 +38,14 @@ namespace InteractionSystem.UI
             if (UI.TryGet<InteractionPopup>(out var popup))
             {
                 popup.Hide();
+            }
+        }
+
+        private void OnInteracting(InteractingEvent e)
+        {
+            if (UI.TryGet<InteractionPopup>(out var popup))
+            {
+                popup.SetElapsed(e.Elapsed);
             }
         }
     }
