@@ -209,7 +209,9 @@ With [LocalizationSystem](https://github.com/fatihgezerx/LocalizationSystem) in 
 object's Name becomes translatable: after **Compile**, **Sync Project** in LocalizationSystem's
 Language Data window finds the Names on the interactable prefabs and adds each one as a row, so it is
 translated as one sentence. The UI's `InteractionText` then shows the Name in the current language and
-follows language changes, even while the popup is closed. In your own code, show
+follows language changes, even while the popup is closed. If the popup is open when the language changes,
+`InteractionController` resizes it to the new text in the same frame (UniMVC's `RebuildLayoutLater`). In
+your own code, show
 `LocalizationRuntime.Get(e.Target.DisplayName)` instead of `e.Target.DisplayName`.
 
 It is optional: without LocalizationSystem, InteractionSystem compiles and shows the Names as written.

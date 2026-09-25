@@ -1,5 +1,8 @@
 #if HAS_INTERACTION_SYSTEM && HAS_UNIMVC && HAS_EVENT_SYSTEM && HAS_UNITASK && HAS_INPUT_SYSTEM
 using EventSystem;
+#if HAS_LOCALIZATION_SYSTEM
+using LocalizationSystem;
+#endif
 using UniMVC;
 
 namespace InteractionSystem.UI
@@ -7,7 +10,8 @@ namespace InteractionSystem.UI
     /// <summary>
     /// The interaction system's link to the UI: the only place that listens to its focus and hold events,
     /// passing them on to the <see cref="InteractionPopup"/>. It sits on the <see cref="UIManager"/>'s object,
-    /// which is always active, so no focus change is missed while the popup is closed.
+    /// which is always active, so no focus change is missed while the popup is closed. With
+    /// LocalizationSystem, it also resizes the open popup to its translated text when the language changes.
     /// </summary>
     public sealed class InteractionController : ControllerBase
     {
@@ -16,6 +20,9 @@ namespace InteractionSystem.UI
             EventManager.Register<FocusEvent>(OnFocus);
             EventManager.Register<LoseFocusEvent>(OnLoseFocus);
             EventManager.Register<InteractingEvent>(OnInteracting);
+#if HAS_LOCALIZATION_SYSTEM
+            LocalizationRuntime.LanguageChanged += OnLanguageChanged;
+#endif
         }
 
         private void OnDestroy()
@@ -23,6 +30,9 @@ namespace InteractionSystem.UI
             EventManager.Unregister<FocusEvent>(OnFocus);
             EventManager.Unregister<LoseFocusEvent>(OnLoseFocus);
             EventManager.Unregister<InteractingEvent>(OnInteracting);
+#if HAS_LOCALIZATION_SYSTEM
+            LocalizationRuntime.LanguageChanged -= OnLanguageChanged;
+#endif
         }
 
         private void OnFocus(FocusEvent e)
@@ -48,6 +58,17 @@ namespace InteractionSystem.UI
                 popup.SetElapsed(e.Elapsed);
             }
         }
+
+#if HAS_LOCALIZATION_SYSTEM
+        // Later, not now: the labels translate themselves on the same event, some only after this runs.
+        private void OnLanguageChanged()
+        {
+            if (UI.TryGet<InteractionPopup>(out var popup))
+            {
+                popup.RebuildLayoutLater();
+            }
+        }
+#endif
     }
 }
 #endif
