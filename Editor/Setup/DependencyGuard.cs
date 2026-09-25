@@ -26,12 +26,19 @@ namespace InteractionSystem.Setup
     /// <c>Assets/Scripts/...</c> - exactly as if it had been copied there by hand, so every file stays
     /// visible and editable.</item>
     /// </list>
+    /// It also keeps <c>HAS_INTERACTION_SYSTEM</c> set while Interaction System is in the project, so code that
+    /// uses it from outside (your own scripts) can be left out of compilation once it's removed.
+    /// When Interaction System is deleted, the guard clears every symbol it manages, since nothing would
+    /// keep them up to date afterwards; the guards of other systems still in the project set the shared
+    /// ones again after the reload.
     /// </remarks>
     [InitializeOnLoad]
     internal sealed class DependencyGuard : AssetPostprocessor, IActiveBuildTargetChanged
     {
         internal const string SystemName = "Interaction System";
-        private const string DeclinedKey = "InteractionSystem.Setup.DependenciesDeclined";
+        private const string DeclinedKey = "InteractionSystem.Setup.DeclinedDependencies";
+        private const string SetupAsmdefFile = "InteractionSystem.Setup.asmdef";
+        private const string OwnDefine = "HAS_INTERACTION_SYSTEM";
         private const string Branch = "main";
 
         /// <summary>Everything Interaction System uses. Optional ones (with a purpose) only enable extra features.</summary>
@@ -65,6 +72,28 @@ namespace InteractionSystem.Setup
         // symbols right away, during this import, so the compilation that follows already uses them.
         private static void OnPostprocessAllAssets(string[] imported, string[] deleted, string[] moved, string[] movedFrom)
         {
+            // Interaction System itself is being deleted: clear every symbol it manages, or a leftover one
+            // (e.g. HAS_EVENT_SYSTEM once Event System is gone too) would let a later copy compile against
+            // a missing dependency. Also forget an earlier "Not now", so a fresh copy asks again.
+            if (ContainsFile(deleted, SetupAsmdefFile))
+            {
+                SessionState.EraseString(DeclinedKey);
+                var symbols = new Dictionary<string, bool> { [OwnDefine] = false };
+                foreach (var dependency in Dependencies)
+                {
+                    symbols[dependency.Define] = false;
+                }
+
+                ApplyDefines(symbols);
+                return;
+            }
+
+            // Imported again (e.g. a newer copy): ask again too.
+            if (ContainsFile(imported, SetupAsmdefFile))
+            {
+                SessionState.EraseString(DeclinedKey);
+            }
+
             if (ContainsAsmdef(imported) || ContainsAsmdef(deleted) || ContainsAsmdef(moved))
             {
                 Refresh(false);
@@ -94,7 +123,7 @@ namespace InteractionSystem.Setup
         internal static bool Refresh(bool prompt)
         {
             var assemblies = FindAssemblyDefinitions();
-            var symbols = new Dictionary<string, bool>();
+            var symbols = new Dictionary<string, bool> { [OwnDefine] = true };
             var missing = new List<Dependency>();
 
             foreach (var dependency in Dependencies)
@@ -114,8 +143,9 @@ namespace InteractionSystem.Setup
                 return false;
             }
 
-            // Asked whenever something is missing, unless "Not now" was picked in this editor session.
-            if (prompt && !IsInstalling && !Application.isBatchMode && !SessionState.GetBool(DeclinedKey, false))
+            // Asked whenever something is missing, unless "Not now" was already picked for all of it in
+            // this editor session (a dependency that goes missing later is asked about again).
+            if (prompt && !IsInstalling && !Application.isBatchMode && !WasDeclined(missing))
             {
                 Prompt(missing);
             }
@@ -194,8 +224,28 @@ namespace InteractionSystem.Setup
             }
             else
             {
-                SessionState.SetBool(DeclinedKey, true);
+                var names = new List<string>();
+                foreach (var dependency in missing)
+                {
+                    names.Add(dependency.Name);
+                }
+
+                SessionState.SetString(DeclinedKey, string.Join("\n", names));
             }
+        }
+
+        private static bool WasDeclined(List<Dependency> missing)
+        {
+            var declined = new HashSet<string>(SessionState.GetString(DeclinedKey, string.Empty).Split('\n'));
+            foreach (var dependency in missing)
+            {
+                if (!declined.Contains(dependency.Name))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static void Install(List<Dependency> dependencies)
@@ -362,6 +412,19 @@ namespace InteractionSystem.Setup
             {
                 PlayerSettings.SetScriptingDefineSymbols(target, defines.ToArray());
             }
+        }
+
+        private static bool ContainsFile(string[] paths, string fileName)
+        {
+            foreach (var path in paths)
+            {
+                if (Path.GetFileName(path) == fileName)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool ContainsAsmdef(string[] paths)

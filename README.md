@@ -55,8 +55,8 @@ Clone or download this repository, then copy its contents into a folder under `A
 
 **Importing it never breaks your project.** A small setup script (with no dependencies of its own)
 checks for the packages above. While one is missing, InteractionSystem is simply left out of
-compilation, so there are no errors, and a dialog offers to install what's missing in one click (it asks
-again in the next editor session if you pick **Not now**). Once everything is installed, the system
+compilation, so there are no errors, and a dialog offers to install what's missing in one click (if you pick **Not now**, it asks
+again in the next editor session or when InteractionSystem is imported again). Once everything is installed, the system
 compiles on its own.
 
 EventSystem is downloaded into `Assets/Scripts/EventSystem/`, exactly as if you had copied it there, so
