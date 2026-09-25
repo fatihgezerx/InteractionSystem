@@ -1,0 +1,16 @@
+#if HAS_INTERACTION_SYSTEM && HAS_UNIMVC && HAS_EVENT_SYSTEM && HAS_UNITASK && HAS_INPUT_SYSTEM
+using UniMVC;
+
+namespace InteractionSystem.UI
+{
+    /// <summary>The <see cref="InteractionPopup"/>'s label: the focused object's group header, then its own name.</summary>
+    public sealed class InteractionText : TextViewBase
+    {
+        /// <summary>
+        /// Shows <paramref name="target"/>'s group header (from its group in <see cref="InteractData"/>) followed
+        /// by its own name, e.g. "Open" + "Door" = "Open Door"; just the name when the group has no header.
+        /// </summary>
+        public void SetTarget(Interactable target) => SetText(target.FullName);
+    }
+}
+#endif

@@ -32,6 +32,8 @@ interactable - component, collider, layer and settings included.
   when the key is released or the object loses focus
 - **Two ways to react**: `UnityEvent`s on each `Interactable` for no-code wiring, and allocation-free
   `EventManager` events (`FocusEvent`, `InteractEvent`...) for code
+- **Ready-made prompt UI** with [UniMVC](https://github.com/fatihgezerx/UniMVC) (optional): a popup that
+  shows the focused object's name, added to your MVC folder on its own (see [UI](#ui))
 - **Scene view gizmo**: the line or sphere is drawn yellow while nothing is detected, green while
   something is
 - Drag-to-reorder groups in the Inspector
@@ -47,6 +49,7 @@ interactable - component, collider, layer and settings included.
 | [EventSystem](https://github.com/fatihgezerx/EventSystem) | Publishes `FocusEvent`, `LoseFocusEvent`, `InteractEvent` and `InteractingEvent` |
 | [UniTask](https://github.com/Cysharp/UniTask) | The detection loop and holds run on UniTask, with no `Update` |
 | **The new Input System** (1.8 or newer, for project-wide actions) | The `Interact` action |
+| [UniMVC](https://github.com/fatihgezerx/UniMVC) (optional) | The ready-made interaction prompt (see [UI](#ui)) |
 
 ### Installation
 
@@ -59,8 +62,8 @@ compilation, so there are no errors, and a dialog offers to install what's missi
 again in the next editor session or when InteractionSystem is imported again). Once everything is installed, the system
 compiles on its own.
 
-EventSystem is downloaded into `Assets/Scripts/EventSystem/`, exactly as if you had copied it there, so
-its files stay visible and editable. UniTask and the Input System are installed through the Package
+EventSystem and UniMVC are downloaded into `Assets/Scripts/EventSystem/` and `Assets/Scripts/MVC/`,
+exactly as if you had copied them there, so their files stay visible and editable. UniTask and the Input System are installed through the Package
 Manager. To install them yourself instead: copy [EventSystem](https://github.com/fatihgezerx/EventSystem)
 into `Assets/Scripts/EventSystem/`, and add UniTask in `Window > Package Manager > + > Add package from
 git URL...` with:
@@ -164,6 +167,35 @@ private void OnDisable() => EventManager.Unregister<FocusEvent>(OnFocus);
 
 private void OnFocus(FocusEvent e) => promptLabel.text = e.Target.FullName; // "Open Door"
 ```
+
+## UI
+
+With [UniMVC](https://github.com/fatihgezerx/UniMVC), a ready-made prompt that shows the focused object's
+name is added to your project. The setup script copies these views into your MVC folder on its own,
+creating the subfolders as needed: right away if UniMVC is already in the project when you import
+InteractionSystem, or as soon as UniMVC is added later (by you or by the setup dialog). They become your
+own project code, so edit them freely. Existing files are never overwritten, and a view you delete isn't
+brought back unless InteractionSystem or UniMVC is imported again. Until everything InteractionSystem
+needs is installed, and again if you remove InteractionSystem later, the views compile to nothing, so
+they never cause errors.
+
+| File | Base | What it does |
+|---|---|---|
+| `Controllers/InteractionController` | `ControllerBase` | Listens to `FocusEvent` / `LoseFocusEvent` and opens / closes the popup |
+| `Popups/InteractionPopup` | `PopupViewBase` | The prompt: filled with the focused object and shown on focus, hidden on lose focus |
+| `Texts/InteractionText` | `TextViewBase` | The prompt's label: the group name, then the object name (`Open Door`) |
+
+**Setup:**
+
+1. Put `InteractionController` on the Canvas that has the `UIManager`.
+2. Create the popup under the Canvas: an object with `InteractionPopup`, and inside it a TextMeshPro text
+   with `InteractionText`. Leave the popup inactive.
+3. Press **Collect From Children** on the popup and on the `UIManager`: the text goes into the popup's
+   Texts, the popup into the `UIManager`'s Popups and the controller into its Controllers.
+4. Call `UIManager.Initialize()` from your bootstrap code.
+
+The popup can also sit inside another panel's list, but if it is inside that panel in the hierarchy
+too, it only becomes visible while that panel is open.
 
 ## Holding
 

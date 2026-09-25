@@ -1,0 +1,43 @@
+#if HAS_INTERACTION_SYSTEM && HAS_UNIMVC && HAS_EVENT_SYSTEM && HAS_UNITASK && HAS_INPUT_SYSTEM
+using EventSystem;
+using UniMVC;
+
+namespace InteractionSystem.UI
+{
+    /// <summary>
+    /// The interaction system's link to the UI: the only place that listens to its focus events, passing
+    /// them on to the <see cref="InteractionPopup"/>. It sits on the <see cref="UIManager"/>'s object, which
+    /// is always active, so no focus change is missed while the popup is closed.
+    /// </summary>
+    public sealed class InteractionController : ControllerBase
+    {
+        protected override void OnInitialize()
+        {
+            EventManager.Register<FocusEvent>(OnFocus);
+            EventManager.Register<LoseFocusEvent>(OnLoseFocus);
+        }
+
+        private void OnDestroy()
+        {
+            EventManager.Unregister<FocusEvent>(OnFocus);
+            EventManager.Unregister<LoseFocusEvent>(OnLoseFocus);
+        }
+
+        private void OnFocus(FocusEvent e)
+        {
+            if (UI.TryGet<InteractionPopup>(out var popup))
+            {
+                popup.Open(e.Target);
+            }
+        }
+
+        private void OnLoseFocus(LoseFocusEvent e)
+        {
+            if (UI.TryGet<InteractionPopup>(out var popup))
+            {
+                popup.Hide();
+            }
+        }
+    }
+}
+#endif

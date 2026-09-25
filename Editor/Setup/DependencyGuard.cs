@@ -27,7 +27,7 @@ namespace InteractionSystem.Setup
     /// visible and editable.</item>
     /// </list>
     /// It also keeps <c>HAS_INTERACTION_SYSTEM</c> set while Interaction System is in the project, so code that
-    /// uses it from outside (your own scripts) can be left out of compilation once it's removed.
+    /// uses it from outside (the MVC scripts it adds) can be left out of compilation once it's removed.
     /// When Interaction System is deleted, the guard clears every symbol it manages, since nothing would
     /// keep them up to date afterwards; the guards of other systems still in the project set the shared
     /// ones again after the reload.
@@ -47,6 +47,7 @@ namespace InteractionSystem.Setup
             Dependency.Repository("Event System", "EventSystem.Runtime", "HAS_EVENT_SYSTEM", "https://github.com/fatihgezerx/EventSystem", "Assets/Scripts/EventSystem"),
             Dependency.Package("UniTask", "UniTask", "HAS_UNITASK", "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask", "com.cysharp.unitask"),
             Dependency.Package("Input System", "Unity.InputSystem", "HAS_INPUT_SYSTEM", "com.unity.inputsystem", "com.unity.inputsystem"),
+            Dependency.Repository("UniMVC", "UniMVC.Runtime", "HAS_UNIMVC", "https://github.com/fatihgezerx/UniMVC", "Assets/Scripts/MVC", "for the interaction prompt UI"),
         };
 
         private static AddAndRemoveRequest _packageRequest;
