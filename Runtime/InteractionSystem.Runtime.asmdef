@@ -4,7 +4,8 @@
     "references": [
         "EventSystem.Runtime",
         "UniTask",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "LocalizationSystem.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

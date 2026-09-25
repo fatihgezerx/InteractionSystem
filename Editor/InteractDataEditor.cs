@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -7,32 +6,28 @@ namespace InteractionSystem
 {
     /// <summary>
     /// Custom Inspector for <see cref="InteractData"/>: an INTERACT SETTINGS box (with In Child and
-    /// Child Count side by side), an INTERACTABLES box of headed groups below it, and a "Compile" button
-    /// that gives every listed prefab an <see cref="Interactable"/> (only if missing), a
+    /// Child Count side by side), an INTERACTABLES box with the list of prefabs below it, and a "Compile"
+    /// button that gives every listed prefab an <see cref="Interactable"/> (only if missing), a
     /// <see cref="BoxCollider"/> (only if it has no collider), the <c>Interact</c> layer (created in the
-    /// Tag Manager if missing), its group header, name and hold settings. Prefabs that are already up
-    /// to date are skipped, not re-saved.
+    /// Tag Manager if missing), its name and hold settings. Prefabs that are already up to date are
+    /// skipped, not re-saved.
     /// </summary>
     [CustomEditor(typeof(InteractData))]
     internal sealed class InteractDataEditor : Editor
     {
         private const float HeaderHeight = 28f;
-        private const float GroupHeaderHeight = 22f;
 
-        private const string GroupInfo =
-            "When naming groups, keep in mind that the group name is shown in front of the object's name " +
-            "(e.g. \"Open\" + \"Door\" = \"Open Door\"). Leave a group name empty to show only the object's name.";
+        private const string NameInfo =
+            "Each object's Name is shown exactly as written, so write the whole prompt (e.g. \"Take Battery\"). " +
+            "With LocalizationSystem, the whole Name is translated as one sentence (e.g. \"Bataryayı al\"). " +
+            "Leave it empty to show the prefab's name.";
 
         // Same green as PoolData's Compile button.
         private static readonly Color CompileButtonColor = new(0.4f, 0.75f, 0.4f);
 
         private SerializedProperty _settings;
-        private SerializedProperty _groups;
-        private readonly List<ReorderableList> _groupLists = new();
-        private readonly GroupDragReorder _groupReorder = new();
+        private ReorderableList _interactables;
         private GUIStyle _headerStyle;
-        private GUIStyle _groupHeaderStyle;
-        private GUIStyle _hintStyle;
 
         // Same style as PoolData's group headers.
         private GUIStyle HeaderStyle => _headerStyle ??= new GUIStyle(EditorStyles.boldLabel)
@@ -41,26 +36,10 @@ namespace InteractionSystem
             fixedHeight = HeaderHeight
         };
 
-        private GUIStyle GroupHeaderStyle => _groupHeaderStyle ??= new GUIStyle(EditorStyles.textField)
-        {
-            fontSize = 14,
-            fontStyle = FontStyle.Bold,
-            fixedHeight = GroupHeaderHeight,
-            alignment = TextAnchor.MiddleLeft
-        };
-
-        private GUIStyle HintStyle => _hintStyle ??= new GUIStyle(EditorStyles.label)
-        {
-            fontStyle = FontStyle.Italic,
-            alignment = TextAnchor.MiddleLeft,
-            padding = new RectOffset(6, 0, 0, 0),
-            normal = { textColor = new Color(0.5f, 0.5f, 0.5f) }
-        };
-
         private void OnEnable()
         {
             _settings = serializedObject.FindProperty("generalSettings");
-            _groups = serializedObject.FindProperty("groups");
+            _interactables = CreateEntryList(serializedObject.FindProperty("interactables"));
         }
 
         public override void OnInspectorGUI()
@@ -110,80 +89,12 @@ namespace InteractionSystem
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("INTERACTABLES", HeaderStyle, GUILayout.Height(HeaderHeight));
-            EditorGUILayout.HelpBox(GroupInfo, MessageType.Info);
+            EditorGUILayout.HelpBox(NameInfo, MessageType.Info);
             EditorGUILayout.Space(6);
 
-            // Lists address their group by index, so rebuild them whenever groups are added or removed.
-            if (_groupLists.Count != _groups.arraySize)
-            {
-                _groupLists.Clear();
-                for (var i = 0; i < _groups.arraySize; i++)
-                {
-                    _groupLists.Add(CreateEntryList(_groups.GetArrayElementAtIndex(i).FindPropertyRelative("interactables")));
-                }
-            }
-
-            var groupPendingRemoval = -1;
-            _groupReorder.Begin();
-            for (var i = 0; i < _groups.arraySize; i++)
-            {
-                if (DrawGroup(i))
-                {
-                    groupPendingRemoval = i;
-                }
-
-                _groupReorder.RecordGroupRect();
-                EditorGUILayout.Space(6);
-            }
-
-            if (_groupReorder.End(out var from, out var to))
-            {
-                _groups.MoveArrayElement(from, to);
-                _groupLists.Clear();
-            }
-            else if (groupPendingRemoval >= 0)
-            {
-                _groups.DeleteArrayElementAtIndex(groupPendingRemoval);
-                _groupLists.Clear();
-            }
-
-            if (GUILayout.Button("+ Add Group", GUILayout.Height(28)))
-            {
-                // A new array element copies the last one, so clear it.
-                _groups.arraySize++;
-                var group = _groups.GetArrayElementAtIndex(_groups.arraySize - 1);
-                group.FindPropertyRelative("header").stringValue = string.Empty;
-                group.FindPropertyRelative("interactables").arraySize = 0;
-                _groupLists.Clear();
-            }
+            _interactables.DoLayoutList();
 
             EditorGUILayout.EndVertical();
-        }
-
-        /// <summary>Draws one group; returns true if its remove button was clicked.</summary>
-        private bool DrawGroup(int index)
-        {
-            var header = _groups.GetArrayElementAtIndex(index).FindPropertyRelative("header");
-
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
-            EditorGUILayout.BeginHorizontal();
-            _groupReorder.DrawHandle(index, GroupHeaderHeight);
-            var headerRect = EditorGUILayout.GetControlRect(GUILayout.Height(GroupHeaderHeight));
-            header.stringValue = EditorGUI.TextField(headerRect, header.stringValue, GroupHeaderStyle);
-            if (string.IsNullOrEmpty(header.stringValue))
-            {
-                EditorGUI.LabelField(headerRect, "Group name (empty = object name only)", HintStyle);
-            }
-
-            var remove = GUILayout.Button("✕", GUILayout.Width(GroupHeaderHeight), GUILayout.Height(GroupHeaderHeight));
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.Space(4);
-            _groupLists[index].DoLayoutList();
-
-            EditorGUILayout.EndVertical();
-            return remove;
         }
 
         private ReorderableList CreateEntryList(SerializedProperty entries)
@@ -233,8 +144,7 @@ namespace InteractionSystem
 
             var updated = 0;
             var upToDate = 0;
-            foreach (var group in data.Groups)
-            foreach (var entry in group.Interactables)
+            foreach (var entry in data.Interactables)
             {
                 var prefab = entry?.Prefab;
                 if (prefab == null)
@@ -249,10 +159,9 @@ namespace InteractionSystem
                     continue;
                 }
 
-                var header = group.Header?.Trim() ?? string.Empty;
                 var displayName = string.IsNullOrWhiteSpace(entry.DisplayName) ? prefab.name : entry.DisplayName;
 
-                if (IsUpToDate(prefab, entry, header, displayName, layer))
+                if (IsUpToDate(prefab, entry, displayName, layer))
                 {
                     upToDate++;
                     continue;
@@ -273,7 +182,6 @@ namespace InteractionSystem
                     }
 
                     root.layer = layer;
-                    interactable.header = header;
                     interactable.displayName = displayName;
                     interactable.holding = entry.Holding;
                     interactable.holdDuration = entry.Duration;
@@ -296,12 +204,11 @@ namespace InteractionSystem
             Debug.Log($"[InteractData] Compile finished: {updated} prefab(s) updated, {upToDate} already up to date.");
         }
 
-        private static bool IsUpToDate(GameObject prefab, InteractEntry entry, string header, string displayName, int layer)
+        private static bool IsUpToDate(GameObject prefab, InteractEntry entry, string displayName, int layer)
         {
             return prefab.TryGetComponent<Interactable>(out var interactable)
                    && prefab.TryGetComponent<Collider>(out _)
                    && prefab.layer == layer
-                   && interactable.header == header
                    && interactable.displayName == displayName
                    && interactable.holding == entry.Holding
                    && Mathf.Approximately(interactable.holdDuration, entry.Duration);

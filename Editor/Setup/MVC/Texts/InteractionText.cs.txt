@@ -1,16 +1,85 @@
 #if HAS_INTERACTION_SYSTEM && HAS_UNIMVC && HAS_EVENT_SYSTEM && HAS_UNITASK && HAS_INPUT_SYSTEM
+#if HAS_LOCALIZATION_SYSTEM
+using LocalizationSystem;
+#endif
 using UniMVC;
 
 namespace InteractionSystem.UI
 {
-    /// <summary>The <see cref="InteractionPopup"/>'s label: the focused object's group header, then its own name.</summary>
+    /// <summary>
+    /// The <see cref="InteractionPopup"/>'s label: the focused object's name, exactly as written in
+    /// <see cref="InteractData"/> (e.g. "Take Battery"). With LocalizationSystem, it is shown in the current
+    /// language and follows language changes, even while the popup is closed.
+    /// </summary>
     public sealed class InteractionText : TextViewBase
     {
-        /// <summary>
-        /// Shows <paramref name="target"/>'s group header (from its group in <see cref="InteractData"/>) followed
-        /// by its own name, e.g. "Open" + "Door" = "Open Door"; just the name when the group has no header.
-        /// </summary>
-        public void SetTarget(Interactable target) => SetText(target.FullName);
+        private Interactable _target;
+
+        /// <summary>Shows <paramref name="target"/>'s name.</summary>
+        public void SetTarget(Interactable target)
+        {
+            _target = target;
+            Refresh();
+        }
+
+#if HAS_LOCALIZATION_SYSTEM
+        protected override void OnInitialize()
+        {
+            base.OnInitialize();
+            LocalizationRuntime.LanguageChanged += Refresh;
+        }
+
+        private void OnDestroy() => LocalizationRuntime.LanguageChanged -= Refresh;
+#endif
+
+        private void Refresh()
+        {
+#if HAS_LOCALIZATION_SYSTEM
+            // Raised by a static event after this label was destroyed without ever being enabled.
+            if (this == null)
+            {
+                LocalizationRuntime.LanguageChanged -= Refresh;
+                return;
+            }
+#endif
+
+            if (_target == null)
+            {
+                return;
+            }
+
+#if HAS_LOCALIZATION_SYSTEM
+            SetText(LocalizationRuntime.Get(_target.DisplayName));
+#else
+            SetText(_target.DisplayName);
+#endif
+        }
+
+#if UNITY_EDITOR && HAS_LOCALIZATION_SYSTEM
+        // This label is filled by code, so "Sync Project" must leave it alone: a LocalizedText here would
+        // overwrite the object's name every time the popup opens. Keeps it marked with
+        // ExcludeFromLocalization - also on labels made before LocalizationSystem was installed.
+        private void OnValidate()
+        {
+            UnityEditor.EditorApplication.delayCall += () =>
+            {
+                if (this == null || UnityEngine.Application.isPlaying || UnityEditor.EditorUtility.IsPersistent(this))
+                {
+                    return;
+                }
+
+                if (!TryGetComponent<ExcludeFromLocalization>(out _))
+                {
+                    UnityEditor.Undo.AddComponent<ExcludeFromLocalization>(gameObject);
+                }
+
+                if (TryGetComponent<LocalizedText>(out var localizedText))
+                {
+                    UnityEditor.Undo.DestroyObjectImmediate(localizedText);
+                }
+            };
+        }
+#endif
     }
 }
 #endif

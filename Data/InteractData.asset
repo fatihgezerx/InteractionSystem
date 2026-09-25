@@ -24,10 +24,8 @@ MonoBehaviour:
     raycastLayers:
       serializedVersion: 2
       m_Bits: 328
-  groups:
-  - header: Interact
-    interactables:
-    - displayName: Sphere
-      prefab: {fileID: 2268831741385135292, guid: c554a840c14a0d4469297ab66392cccf, type: 3}
-      holding: 0
-      duration: 0
+  interactables:
+  - displayName: Interact Sphere
+    prefab: {fileID: 2268831741385135292, guid: c554a840c14a0d4469297ab66392cccf, type: 3}
+    holding: 0
+    duration: 0

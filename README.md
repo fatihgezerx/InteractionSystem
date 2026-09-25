@@ -13,7 +13,7 @@ choose, input comes from **Input System** callbacks, and every moment of an inte
 as an event.
 
 Everything is configured in a single `InteractData` asset: detection settings on top, your
-interactable prefabs below in named groups. One click on **Compile** makes every listed prefab
+interactable prefabs below, each with the prompt it shows. One click on **Compile** makes every listed prefab
 interactable - component, collider, layer and settings included.
 
 ## Features
@@ -26,8 +26,9 @@ interactable - component, collider, layer and settings included.
 - **One-click Compile**: adds an `Interactable` component (only if missing), a `BoxCollider` (only if
   the object has no collider) and the `Interact` layer (created automatically), and skips prefabs that
   are already up to date
-- **Grouped prompts**: a group's name is shown in front of each object's name - `Open` + `Door` =
-  `Open Door` - or leave it empty to show just the name
+- **Whole-sentence prompts**: each object's name is shown exactly as written (`Take Battery`), so
+  with [LocalizationSystem](https://github.com/fatihgezerx/LocalizationSystem) (optional) it is
+  translated as one sentence (`Bataryayı al`), not word by word
 - **Hold to interact** per object, with live progress for UI (e.g. a slider) and a timer that resets
   when the key is released or the object loses focus
 - **Two ways to react**: `UnityEvent`s on each `Interactable` for no-code wiring, and allocation-free
@@ -36,7 +37,7 @@ interactable - component, collider, layer and settings included.
   shows the focused object's name, added to your MVC folder on its own (see [UI](#ui))
 - **Scene view gizmo**: the line or sphere is drawn yellow while nothing is detected, green while
   something is
-- Drag-to-reorder groups in the Inspector
+- Drag-to-reorder interactables in the Inspector
 
 ## Setup
 
@@ -50,6 +51,7 @@ interactable - component, collider, layer and settings included.
 | [UniTask](https://github.com/Cysharp/UniTask) | The detection loop and holds run on UniTask, with no `Update` |
 | **The new Input System** (1.8 or newer, for project-wide actions) | The `Interact` action |
 | [UniMVC](https://github.com/fatihgezerx/UniMVC) (optional) | The ready-made interaction prompt (see [UI](#ui)) |
+| [LocalizationSystem](https://github.com/fatihgezerx/LocalizationSystem) (optional) | Translating object names (see [Localization](#localization)) |
 
 ### Installation
 
@@ -97,24 +99,23 @@ blocks: **INTERACT SETTINGS** and **INTERACTABLES**.
 | Radius | `Line`: length of the ray. `Sphere`: radius of the sphere (0.1 - 5) |
 | Check Interval | Seconds between checks (0.01 - 1) |
 | Raycast Layers | Only objects on these layers are detected |
-| Interactables | Groups of prefabs. Each group has a **name**; each prefab has a **Name** (empty = the prefab's name) and **Holding** / **Duration** |
+| Interactables | The prefabs. Each has a **Name** (the prompt shown for it, empty = the prefab's name) and **Holding** / **Duration** |
 
-![Interact Data inspector with its settings and a group of interactables](ScreenShots/Inspector.png)
+![Interact Data inspector with its settings and its interactables](ScreenShots/Inspector.png)
 
 `Line` never sees through anything: if an object that isn't on Raycast Layers (a wall) is in front
 of an interactable, nothing is detected. `Sphere` detects every interactable within Radius, walls or
 not, and focuses the closest one.
 
-A **group's name** is shown in front of the name of every object in it: a group named `Open` holding
-a `Door` gives `Open Door`, and a group named `Collect` holding a `Battery` gives `Collect Battery`.
-Use as many groups as you like, a single group (e.g. `Interact`), or leave the group name empty to
-show only the object's name. Reorder groups by dragging the handle on the left of a group's name.
+An object's **Name** is shown exactly as written, so write the whole prompt: `Open Door`,
+`Take Battery`. Keeping it one sentence is what lets a translation reorder it the way the other
+language needs (`Take Battery` becomes `Bataryayı al` in Turkish, not `Al Batarya`).
 
-**2. Drag your prefabs into the groups and click Compile.** Every prefab gets:
+**2. Drag your prefabs into the list and click Compile.** Every prefab gets:
 - an `Interactable` component, only if it doesn't have one yet,
 - a `BoxCollider`, only if it has no collider yet,
 - the `Interact` layer (created automatically if it doesn't exist),
-- its group name, Name and Holding / Duration settings.
+- its Name and Holding / Duration settings.
 
 Compiling again after adding or changing entries only touches the prefabs that changed.
 
@@ -156,16 +157,14 @@ are declared by InteractionSystem itself.
 
 | `e.Target.` | Example | Meaning |
 |---|---|---|
-| `FullName` | `Open Door` | Group name + object name, ready for UI. Just the name if the group has no name |
-| `Header` | `Open` | The group name alone (may be empty) |
-| `DisplayName` | `Door` | The object name alone |
+| `DisplayName` | `Take Battery` | The object's Name, ready for UI (the prefab's name if left empty) |
 | `Holding` / `HoldDuration` | `true` / `2` | Hold settings |
 
 ```csharp
 private void OnEnable()  => EventManager.Register<FocusEvent>(OnFocus);
 private void OnDisable() => EventManager.Unregister<FocusEvent>(OnFocus);
 
-private void OnFocus(FocusEvent e) => promptLabel.text = e.Target.FullName; // "Open Door"
+private void OnFocus(FocusEvent e) => promptLabel.text = e.Target.DisplayName; // "Take Battery"
 ```
 
 ## UI
@@ -183,7 +182,7 @@ they never cause errors.
 |---|---|---|
 | `Controllers/InteractionController` | `ControllerBase` | Listens to `FocusEvent` / `LoseFocusEvent` and opens / closes the popup |
 | `Popups/InteractionPopup` | `PopupViewBase` | The prompt: filled with the focused object and shown on focus, hidden on lose focus |
-| `Texts/InteractionText` | `TextViewBase` | The prompt's label: the group name, then the object name (`Open Door`) |
+| `Texts/InteractionText` | `TextViewBase` | The prompt's label: the object's Name (`Take Battery`), translated with LocalizationSystem |
 
 **Setup:**
 
@@ -196,6 +195,19 @@ they never cause errors.
 
 The popup can also sit inside another panel's list, but if it is inside that panel in the hierarchy
 too, it only becomes visible while that panel is open.
+
+## Localization
+
+With [LocalizationSystem](https://github.com/fatihgezerx/LocalizationSystem) in the project, every
+object's Name becomes translatable: after **Compile**, **Sync Project** in LocalizationSystem's
+Language Data window finds the Names on the interactable prefabs and adds each one as a row, so it is
+translated as one sentence. The UI's `InteractionText` then shows the Name in the current language and
+follows language changes, even while the popup is closed. In your own code, show
+`LocalizationRuntime.Get(e.Target.DisplayName)` instead of `e.Target.DisplayName`.
+
+It is optional: without LocalizationSystem, InteractionSystem compiles and shows the Names as written.
+Install it later and the Names become translatable on their own, no change needed. `InteractionText`
+keeps its object marked with `ExcludeFromLocalization`, since its text is filled by code.
 
 ## Holding
 

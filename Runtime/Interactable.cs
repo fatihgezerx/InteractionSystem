@@ -19,7 +19,12 @@ namespace InteractionSystem
     {
         // Written by InteractData > Compile and hidden from the Inspector: InteractData is where these
         // are edited, so a value changed here would just be overwritten by the next Compile.
-        [HideInInspector] [SerializeField] internal string header;
+#if HAS_LOCALIZATION_SYSTEM
+        // Offered for translation by LocalizationSystem's "Sync Project" (it scans prefab components),
+        // as a whole sentence. The symbol is set only while LocalizationSystem is in the project, so the
+        // attribute appears as soon as it is installed and nothing breaks without it.
+        [LocalizationSystem.Localize]
+#endif
         [HideInInspector] [SerializeField] internal string displayName;
         [HideInInspector] [SerializeField] internal bool holding;
         [HideInInspector] [SerializeField] internal float holdDuration = 1f;
@@ -33,17 +38,11 @@ namespace InteractionSystem
         [Tooltip("Invoked when the raycast stops pointing at this object.")]
         [SerializeField] private UnityEvent onLoseFocus;
 
-        /// <summary>The header of this object's group in <see cref="InteractData"/>, e.g. "Open". May be empty.</summary>
-        public string Header => header;
-
-        /// <summary>The object's name as entered in <see cref="InteractData"/>, e.g. "Door".</summary>
-        public string DisplayName => displayName;
-
         /// <summary>
-        /// <see cref="Header"/> in front of <see cref="DisplayName"/>, ready for UI - e.g. "Open Door".
-        /// Just the name when the group has no header.
+        /// The text shown for this object, as entered in <see cref="InteractData"/> (e.g. "Take Battery"), or
+        /// the prefab's name if left empty. With LocalizationSystem, it is also the key of its translation.
         /// </summary>
-        public string FullName => string.IsNullOrWhiteSpace(header) ? displayName : $"{header.Trim()} {displayName}";
+        public string DisplayName => displayName;
 
         /// <summary>Whether Interact must be held for <see cref="HoldDuration"/> instead of just pressed.</summary>
         public bool Holding => holding;

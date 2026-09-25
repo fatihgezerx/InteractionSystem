@@ -18,7 +18,8 @@ namespace InteractionSystem
     [Serializable]
     public sealed class InteractEntry
     {
-        [Tooltip("The object's name, readable at runtime as Interactable.DisplayName (e.g. for UI). Empty = the prefab's name.")]
+        [Tooltip("The text shown for this object, as is (e.g. \"Take Battery\"), readable at runtime as Interactable.DisplayName. " +
+                 "With LocalizationSystem it is translated as a whole. Empty = the prefab's name.")]
         [SerializeField] private string displayName;
 
         [SerializeField] private GameObject prefab;
@@ -33,25 +34,6 @@ namespace InteractionSystem
         public GameObject Prefab => prefab;
         public bool Holding => holding;
         public float Duration => duration;
-    }
-
-    /// <summary>
-    /// A named group of <see cref="InteractEntry"/> items. Its <see cref="Header"/> is shown in front of
-    /// every object's name in the group (e.g. "Open" + "Door" = "Open Door"); leave it empty to show the
-    /// name only.
-    /// </summary>
-    [Serializable]
-    public sealed class InteractGroup
-    {
-        [Tooltip("Shown in front of every object's name in this group, e.g. \"Open\" -> \"Open Door\". Empty = name only.")]
-        [SerializeField] private string header = string.Empty;
-
-        [SerializeField] private List<InteractEntry> interactables = new();
-
-        public string Header => header;
-
-        /// <summary>The prefabs in this group, with their names and hold settings.</summary>
-        public List<InteractEntry> Interactables => interactables;
     }
 
     /// <summary>Detection settings, shown as the "Interact Settings" block of an <see cref="InteractData"/>.</summary>
@@ -104,7 +86,7 @@ namespace InteractionSystem
     /// Everything the interaction system needs: general (detection) settings on top, the objects that
     /// should be interactable below. Press "Compile" to give every listed prefab an
     /// <see cref="Interactable"/> component (only if it doesn't have one), a <see cref="BoxCollider"/>
-    /// (only if it has no collider), the <c>Interact</c> layer, its group header, name and hold settings. At runtime,
+    /// (only if it has no collider), the <c>Interact</c> layer, its name and hold settings. At runtime,
     /// hand this asset to <see cref="InteractionManager.Initialize"/>.
     /// </summary>
     [CreateAssetMenu(menuName = "Interaction System/Interact Data", fileName = "NewInteractData")]
@@ -115,13 +97,13 @@ namespace InteractionSystem
 
         [SerializeField] private InteractSettings generalSettings = new();
 
-        [SerializeField] private List<InteractGroup> groups = new() { new InteractGroup() };
+        [SerializeField] private List<InteractEntry> interactables = new();
 
         /// <summary>Detection settings.</summary>
         public InteractSettings Settings => generalSettings;
 
-        /// <summary>The groups of prefabs Compile makes interactable.</summary>
-        public List<InteractGroup> Groups => groups;
+        /// <summary>The prefabs Compile makes interactable, with their names and hold settings.</summary>
+        public List<InteractEntry> Interactables => interactables;
 
         private void Reset()
         {
