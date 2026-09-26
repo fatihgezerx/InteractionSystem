@@ -21,6 +21,12 @@ namespace InteractionSystem
     /// (Project Settings &gt; Input System Package). <see cref="FocusEvent"/> fires once per
     /// object until it loses focus: re-detecting the same object never re-focuses it, so it never
     /// restarts a hold in progress.
+    /// <para>
+    /// Detection stands by while <see cref="IsPaused"/>: nothing is focused (the current object loses focus)
+    /// and the Interact input does nothing. Anything can pause it (<see cref="Pause"/> / <see cref="Resume"/>);
+    /// with UniMVC in the project it also pauses by itself while a panel or popup that blocks gameplay is open
+    /// (UniMVC's <c>UIBlocking</c>, e.g. an inventory window).
+    /// </para>
     /// </remarks>
     public static class InteractionManager
     {
@@ -36,6 +42,9 @@ namespace InteractionSystem
         private static CancellationTokenSource _loopCts;
         private static CancellationTokenSource _holdCts;
         private static Interactable _holdTarget;
+
+        // Whatever currently pauses detection (a menu, a cutscene...); detection runs while it is empty.
+        private static readonly System.Collections.Generic.HashSet<object> Pausers = new();
 
         /// <summary>Whether <see cref="Initialize"/> has been called and detection is running.</summary>
         public static bool IsInitialized => _loopCts != null;
@@ -57,6 +66,31 @@ namespace InteractionSystem
 
         /// <summary>The interactable currently focused, or null.</summary>
         public static Interactable Current { get; private set; }
+
+        /// <summary>Whether detection stands by: nothing is focused and Interact does nothing.</summary>
+        public static bool IsPaused => Pausers.Count > 0;
+
+        /// <summary>
+        /// Pauses detection for <paramref name="by"/> (any object standing for the reason, e.g. a menu) until it
+        /// calls <see cref="Resume"/>; several can pause at once, and detection runs again once all resumed. The
+        /// focused object loses focus right away.
+        /// </summary>
+        public static void Pause(object by)
+        {
+            if (by != null && Pausers.Add(by) && Pausers.Count == 1)
+            {
+                SetCurrent(null);
+            }
+        }
+
+        /// <summary>Takes back <paramref name="by"/>'s <see cref="Pause"/>.</summary>
+        public static void Resume(object by)
+        {
+            if (by != null)
+            {
+                Pausers.Remove(by);
+            }
+        }
 
         /// <summary>
         /// Resolves the origin from <paramref name="data"/> (tagged object, optionally one of its
@@ -103,6 +137,11 @@ namespace InteractionSystem
             _interactAction.canceled += OnInteractReleased;
             _interactAction.Enable();
 
+#if HAS_UNIMVC
+            UniMVC.UIBlocking.Changed += OnUIBlockingChanged;
+            OnUIBlockingChanged(UniMVC.UIBlocking.IsBlocking);
+#endif
+
             _loopCts = new CancellationTokenSource();
             DetectLoopAsync(_loopCts.Token).Forget();
         }
@@ -110,6 +149,11 @@ namespace InteractionSystem
         /// <summary>Stops detection, unhooks the input and drops the current focus.</summary>
         public static void Shutdown()
         {
+#if HAS_UNIMVC
+            UniMVC.UIBlocking.Changed -= OnUIBlockingChanged;
+            Resume(UIBlockingPause);
+#endif
+
             if (_interactAction != null)
             {
                 _interactAction.started -= OnInteractPressed;
@@ -141,7 +185,7 @@ namespace InteractionSystem
                     return;
                 }
 
-                SetCurrent(_data.Settings.RaycastType == RaycastType.Sphere ? DetectSphere() : DetectLine());
+                SetCurrent(IsPaused ? null : _data.Settings.RaycastType == RaycastType.Sphere ? DetectSphere() : DetectLine());
 
                 var canceled = _data.Settings.CheckInterval > 0f
                     ? await UniTask.Delay(TimeSpan.FromSeconds(_data.Settings.CheckInterval), cancellationToken: token).SuppressCancellationThrow()
@@ -257,7 +301,7 @@ namespace InteractionSystem
         private static void OnInteractPressed(InputAction.CallbackContext context)
         {
             var target = Current;
-            if (target == null)
+            if (target == null || IsPaused)
             {
                 return;
             }
@@ -276,6 +320,23 @@ namespace InteractionSystem
         }
 
         private static void OnInteractReleased(InputAction.CallbackContext context) => CancelHold();
+
+#if HAS_UNIMVC
+        // What pauses detection while a panel that blocks gameplay is open.
+        private static readonly object UIBlockingPause = new();
+
+        private static void OnUIBlockingChanged(bool blocking)
+        {
+            if (blocking)
+            {
+                Pause(UIBlockingPause);
+            }
+            else
+            {
+                Resume(UIBlockingPause);
+            }
+        }
+#endif
 
         // Counts the hold up frame by frame so OnInteracting can report it; interacts once Duration is reached.
         private static async UniTaskVoid HoldAsync(Interactable target, CancellationTokenSource cts)
@@ -350,6 +411,10 @@ namespace InteractionSystem
             _originRoot = null;
             _origin = null;
             Current = null;
+            Pausers.Clear();
+#if HAS_UNIMVC
+            UniMVC.UIBlocking.Changed -= OnUIBlockingChanged;
+#endif
         }
     }
 }

@@ -5,7 +5,8 @@
         "EventSystem.Runtime",
         "UniTask",
         "Unity.InputSystem",
-        "LocalizationSystem.Runtime"
+        "LocalizationSystem.Runtime",
+        "UniMVC.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

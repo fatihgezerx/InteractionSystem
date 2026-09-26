@@ -203,6 +203,17 @@ soon as the key is released or the object loses focus.
 The popup can also sit inside another panel's list, but if it is inside that panel in the hierarchy
 too, it only becomes visible while that panel is open.
 
+## Pausing
+
+`InteractionManager.Pause(by)` stops detection until `InteractionManager.Resume(by)`: nothing is focused (the
+current object loses focus, so its prompt goes) and Interact does nothing. `by` is any object standing for
+the reason - a menu, a cutscene - so several can pause at once, and detection runs again once every one of
+them resumed. `InteractionManager.IsPaused` says whether it stands by.
+
+With [UniMVC](https://github.com/fatihgezerx/UniMVC) in the project it also pauses by itself while a panel or
+popup with **Blocks Gameplay** ticked is open (UniMVC's `UIBlocking`) - e.g. an inventory window or a pause
+menu - and resumes once the last one closes. No code needed.
+
 ## Localization
 
 With [LocalizationSystem](https://github.com/fatihgezerx/LocalizationSystem) in the project, every
