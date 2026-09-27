@@ -66,6 +66,16 @@ namespace InteractionSystem
         [Tooltip("Only objects on these layers are detected. With Line, anything else in front of them blocks detection.")]
         [SerializeField] private LayerMask raycastLayers;
 
+        [Tooltip("Shows an outline on the focused interactable, and removes it when it loses focus. Needs " +
+                 "Outline System in the project; Compile adds an Outline component to every prefab listed below.")]
+        [SerializeField] private bool showOutline;
+
+        [Tooltip("Outline color. Used only while Show Outline is on.")]
+        [SerializeField] private Color outlineColor = new(1f, 0.85f, 0f, 1f);
+
+        [Tooltip("Outline width, in the interactable's local units. Used only while Show Outline is on.")]
+        [Range(0f, 0.1f)] [SerializeField] private float outlineWidth = 0.02f;
+
         public RaycastType RaycastType => raycastType;
         public string OriginTag => originTag;
         public Vector3 LocalPosition => localPosition;
@@ -80,6 +90,10 @@ namespace InteractionSystem
             get => raycastLayers;
             set => raycastLayers = value;
         }
+
+        public bool ShowOutline => showOutline;
+        public Color OutlineColor => outlineColor;
+        public float OutlineWidth => outlineWidth;
     }
 
     /// <summary>

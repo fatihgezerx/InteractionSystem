@@ -296,6 +296,21 @@ namespace InteractionSystem
                 target.Focus();
                 EventManager.Invoke(new FocusEvent(target));
             }
+
+#if HAS_OUTLINE_SYSTEM
+            if (_data.Settings.ShowOutline)
+            {
+                if (previous != null && previous.TryGetComponent<OutlineSystem.Outline>(out var previousOutline))
+                {
+                    previousOutline.Hide();
+                }
+
+                if (target != null && target.TryGetComponent<OutlineSystem.Outline>(out var targetOutline))
+                {
+                    targetOutline.Show();
+                }
+            }
+#endif
         }
 
         private static void OnInteractPressed(InputAction.CallbackContext context)

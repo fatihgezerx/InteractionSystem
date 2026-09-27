@@ -50,6 +50,7 @@ namespace InteractionSystem.Setup
             Dependency.Repository("UniMVC", "UniMVC.Runtime", "HAS_UNIMVC", "https://github.com/fatihgezerx/UniMVC", "Assets/Scripts/MVC", "for the interaction prompt UI, and pausing while a menu is open"),
             Dependency.Repository("Localization System", "LocalizationSystem.Runtime", "HAS_LOCALIZATION_SYSTEM", "https://github.com/fatihgezerx/LocalizationSystem", "Assets/Scripts/LocalizationSystem", "for translating object names"),
             Dependency.Repository("Easy UI", "EasyUI.Editor", "HAS_EASYUI", "https://github.com/fatihgezerx/EasyUI", "Assets/Scripts/EasyUI", "for the Interaction Popup, Text and Slider roles in Easy UI"),
+            Dependency.Repository("Outline System", "OutlineSystem.Runtime", "HAS_OUTLINE_SYSTEM", "https://github.com/fatihgezerx/OutlineSystem", "Assets/Scripts/OutlineSystem", "for showing an outline on the focused object when Show Outline is on"),
         };
 
         private static AddAndRemoveRequest _packageRequest;

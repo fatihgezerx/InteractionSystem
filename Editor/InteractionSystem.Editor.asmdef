@@ -2,7 +2,8 @@
     "name": "InteractionSystem.Editor",
     "rootNamespace": "InteractionSystem",
     "references": [
-        "InteractionSystem.Runtime"
+        "InteractionSystem.Runtime",
+        "OutlineSystem.Runtime"
     ],
     "includePlatforms": [
         "Editor"

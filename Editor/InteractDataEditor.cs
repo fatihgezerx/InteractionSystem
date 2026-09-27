@@ -82,6 +82,21 @@ namespace InteractionSystem
             EditorGUILayout.PropertyField(_settings.FindPropertyRelative("checkInterval"));
             EditorGUILayout.PropertyField(_settings.FindPropertyRelative("raycastLayers"));
 
+            EditorGUILayout.Space(4);
+            var showOutline = _settings.FindPropertyRelative("showOutline");
+            EditorGUILayout.PropertyField(showOutline);
+#if !HAS_OUTLINE_SYSTEM
+            if (showOutline.boolValue)
+            {
+                EditorGUILayout.HelpBox("Outline System isn't in the project - Compile will skip it until it is.", MessageType.Warning);
+            }
+#endif
+            using (new EditorGUI.DisabledScope(!showOutline.boolValue))
+            {
+                EditorGUILayout.PropertyField(_settings.FindPropertyRelative("outlineColor"));
+                EditorGUILayout.PropertyField(_settings.FindPropertyRelative("outlineWidth"));
+            }
+
             EditorGUILayout.EndVertical();
         }
 
@@ -161,7 +176,7 @@ namespace InteractionSystem
 
                 var displayName = string.IsNullOrWhiteSpace(entry.DisplayName) ? prefab.name : entry.DisplayName;
 
-                if (IsUpToDate(prefab, entry, displayName, layer))
+                if (IsUpToDate(data, prefab, entry, displayName, layer))
                 {
                     upToDate++;
                     continue;
@@ -185,6 +200,19 @@ namespace InteractionSystem
                     interactable.displayName = displayName;
                     interactable.holding = entry.Holding;
                     interactable.holdDuration = entry.Duration;
+
+#if HAS_OUTLINE_SYSTEM
+                    if (data.Settings.ShowOutline)
+                    {
+                        if (!root.TryGetComponent<OutlineSystem.Outline>(out var outline))
+                        {
+                            outline = root.AddComponent<OutlineSystem.Outline>();
+                        }
+
+                        outline.Color = data.Settings.OutlineColor;
+                        outline.Width = data.Settings.OutlineWidth;
+                    }
+#endif
                 }
 
                 updated++;
@@ -204,14 +232,31 @@ namespace InteractionSystem
             Debug.Log($"[InteractData] Compile finished: {updated} prefab(s) updated, {upToDate} already up to date.");
         }
 
-        private static bool IsUpToDate(GameObject prefab, InteractEntry entry, string displayName, int layer)
+        private static bool IsUpToDate(InteractData data, GameObject prefab, InteractEntry entry, string displayName, int layer)
         {
-            return prefab.TryGetComponent<Interactable>(out var interactable)
-                   && prefab.TryGetComponent<Collider>(out _)
-                   && prefab.layer == layer
-                   && interactable.displayName == displayName
-                   && interactable.holding == entry.Holding
-                   && Mathf.Approximately(interactable.holdDuration, entry.Duration);
+            if (!prefab.TryGetComponent<Interactable>(out var interactable)
+                || !prefab.TryGetComponent<Collider>(out _)
+                || prefab.layer != layer
+                || interactable.displayName != displayName
+                || interactable.holding != entry.Holding
+                || !Mathf.Approximately(interactable.holdDuration, entry.Duration))
+            {
+                return false;
+            }
+
+#if HAS_OUTLINE_SYSTEM
+            if (data.Settings.ShowOutline)
+            {
+                if (!prefab.TryGetComponent<OutlineSystem.Outline>(out var outline)
+                    || outline.Color != data.Settings.OutlineColor
+                    || !Mathf.Approximately(outline.Width, data.Settings.OutlineWidth))
+                {
+                    return false;
+                }
+            }
+#endif
+
+            return true;
         }
 
         /// <summary>Returns the Interact layer's index, adding it to the first free user layer if missing; -1 if none is free.</summary>
