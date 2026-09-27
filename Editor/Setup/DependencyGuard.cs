@@ -49,6 +49,7 @@ namespace InteractionSystem.Setup
             Dependency.Package("Input System", "Unity.InputSystem", "HAS_INPUT_SYSTEM", "com.unity.inputsystem", "com.unity.inputsystem"),
             Dependency.Repository("UniMVC", "UniMVC.Runtime", "HAS_UNIMVC", "https://github.com/fatihgezerx/UniMVC", "Assets/Scripts/MVC", "for the interaction prompt UI, and pausing while a menu is open"),
             Dependency.Repository("Localization System", "LocalizationSystem.Runtime", "HAS_LOCALIZATION_SYSTEM", "https://github.com/fatihgezerx/LocalizationSystem", "Assets/Scripts/LocalizationSystem", "for translating object names"),
+            Dependency.Repository("Easy UI", "EasyUI.Editor", "HAS_EASYUI", "https://github.com/fatihgezerx/EasyUI", "Assets/Scripts/EasyUI", "for the Interaction Popup, Text and Slider roles in Easy UI"),
         };
 
         private static AddAndRemoveRequest _packageRequest;

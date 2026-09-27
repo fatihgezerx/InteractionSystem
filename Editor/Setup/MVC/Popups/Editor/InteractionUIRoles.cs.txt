@@ -1,0 +1,123 @@
+#if HAS_INTERACTION_SYSTEM && HAS_UNIMVC && HAS_EVENT_SYSTEM && HAS_UNITASK && HAS_INPUT_SYSTEM && HAS_EASYUI
+using System.Collections.Generic;
+using EasyUI;
+using UniMVC;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace InteractionSystem.UI
+{
+    /// <summary>
+    /// The roles an Easy UI panel's elements can have for the interaction prompt, picked in Easy UI (Add Role, at
+    /// the top of an element's inspector). Each one adds its view when the panel is built: the
+    /// <see cref="InteractionPopup"/> on the box, and inside it the <see cref="InteractionText"/> and
+    /// <see cref="InteractionSlider"/>.
+    /// </summary>
+    public static class InteractionRoles
+    {
+        public const string Popup = "interaction.popup";
+        public const string Text = "interaction.text";
+        public const string Slider = "interaction.slider";
+
+        // Localization System's Localized Text, by id: an Interaction Text translates itself, and a LocalizedText
+        // would overwrite it with one line.
+        internal const string LocalizedText = "localization.localized-text";
+    }
+
+    /// <summary>Lists <see cref="InteractionRoles"/> in Easy UI's Add Role menu, under Interaction.</summary>
+    internal sealed class InteractionRoleProvider : IEasyUIRoleProvider
+    {
+        public IEnumerable<EasyUIRole> GetRoles()
+        {
+            yield return new EasyUIRole(InteractionRoles.Popup, "Interaction/Interaction Popup",
+                "The prompt shown while an interactable is focused (e.g. \"Open Door\"). Holds the Interaction Text and Slider. " +
+                "Can be the panel's root.", EasyUIElementType.EmptyObject, EasyUIElementType.Image)
+            {
+                Component = typeof(InteractionPopup)
+            };
+
+            yield return new EasyUIRole(InteractionRoles.Text, "Interaction/Interaction Text",
+                "Inside the Interaction Popup: the focused object's name, in the current language.", EasyUIElementType.Text)
+            {
+                Component = typeof(InteractionText),
+                Conflicts = new[] { InteractionRoles.LocalizedText }
+            };
+
+            yield return new EasyUIRole(InteractionRoles.Slider, "Interaction/Interaction Slider",
+                "Inside the Interaction Popup: fills while a Holding object's Interact is held; hidden for the others.",
+                EasyUIElementType.Slider)
+            {
+                Component = typeof(InteractionSlider)
+            };
+        }
+    }
+
+    /// <summary>
+    /// Sets up a built panel with <see cref="InteractionRoles"/>: the popup hidden until something is focused and
+    /// never in the pointer's way, the slider not draggable, the canvas given a <see cref="UIManager"/> and an
+    /// <see cref="InteractionController"/>, and the views listed where they belong.
+    /// </summary>
+    internal sealed class InteractionUIBuilder : IEasyUIBuildHandler
+    {
+        public int Order => 0;
+
+        public void OnBuilt(EasyUIBuild build)
+        {
+            var popupObject = build.Find(InteractionRoles.Popup);
+            var textObject = build.Find(InteractionRoles.Text);
+            var sliderObject = build.Find(InteractionRoles.Slider);
+            if (popupObject == null && textObject == null && sliderObject == null)
+            {
+                return;
+            }
+
+            if (popupObject == null)
+            {
+                Debug.LogWarning("[Interaction System] The Interaction Text and Slider show in an Interaction Popup: give that role " +
+                                 "to the box holding them (or to the panel's root).", textObject != null ? textObject : sliderObject);
+                return;
+            }
+
+            WarnIfOutside(textObject, popupObject, "Interaction Text");
+            WarnIfOutside(sliderObject, popupObject, "Interaction Slider");
+
+            if (textObject != null && textObject.TryGetComponent<Graphic>(out var label))
+            {
+                label.raycastTarget = false;
+            }
+
+            if (sliderObject != null && sliderObject.TryGetComponent<Slider>(out var slider))
+            {
+                slider.interactable = false;
+            }
+
+            // A prompt: never takes a click or the hover from what is behind it.
+            var popup = popupObject.GetComponent<InteractionPopup>();
+            var group = popup.GetComponent<CanvasGroup>();
+            group.blocksRaycasts = false;
+            group.interactable = false;
+
+            // Its text changes with every object focused: sized again each time it opens.
+            var fields = new SerializedObject(popup);
+            fields.FindProperty("rebuildLayoutOnShow").boolValue = true;
+            fields.ApplyModifiedPropertiesWithoutUndo();
+
+            popupObject.SetActive(false);
+
+            var ui = UISetup.EnsureUIManager(build.Canvas);
+            UISetup.EnsureController<InteractionController>(ui);
+            // Only the prompt's own views: other systems' in the same panel are theirs to list.
+            UISetup.ListViews(ui, popupObject.transform);
+        }
+
+        private static void WarnIfOutside(GameObject go, GameObject popup, string role)
+        {
+            if (go != null && !go.transform.IsChildOf(popup.transform))
+            {
+                Debug.LogWarning($"[Interaction System] The {role} isn't inside the Interaction Popup, so it is never filled.", go);
+            }
+        }
+    }
+}
+#endif

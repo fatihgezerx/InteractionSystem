@@ -1,6 +1,7 @@
 #if HAS_INTERACTION_SYSTEM && HAS_UNIMVC && HAS_EVENT_SYSTEM && HAS_UNITASK && HAS_INPUT_SYSTEM
 #if HAS_LOCALIZATION_SYSTEM
 using LocalizationSystem;
+using UnityEngine;
 #endif
 using UniMVC;
 
@@ -12,6 +13,9 @@ namespace InteractionSystem.UI
     /// language and follows language changes, even while the popup is closed.
     /// </summary>
     public sealed class InteractionText : TextViewBase
+#if HAS_LOCALIZATION_SYSTEM
+        , ILocalizedByCode
+#endif
     {
         private Interactable _target;
 
@@ -55,30 +59,10 @@ namespace InteractionSystem.UI
 #endif
         }
 
-#if UNITY_EDITOR && HAS_LOCALIZATION_SYSTEM
-        // This label is filled by code, so "Sync Project" must leave it alone: a LocalizedText here would
-        // overwrite the object's name every time the popup opens. Keeps it marked with
-        // ExcludeFromLocalization - also on labels made before LocalizationSystem was installed.
-        private void OnValidate()
-        {
-            UnityEditor.EditorApplication.delayCall += () =>
-            {
-                if (this == null || UnityEngine.Application.isPlaying || UnityEditor.EditorUtility.IsPersistent(this))
-                {
-                    return;
-                }
-
-                if (!TryGetComponent<ExcludeFromLocalization>(out _))
-                {
-                    UnityEditor.Undo.AddComponent<ExcludeFromLocalization>(gameObject);
-                }
-
-                if (TryGetComponent<LocalizedText>(out var localizedText))
-                {
-                    UnityEditor.Undo.DestroyObjectImmediate(localizedText);
-                }
-            };
-        }
+#if HAS_LOCALIZATION_SYSTEM
+        // Filled by code with the focused object's name, already in the current language: LocalizationSystem's
+        // "Sync Project" leaves this label alone.
+        bool ILocalizedByCode.Fills(Component text) => text != null && text.gameObject == gameObject;
 #endif
     }
 }

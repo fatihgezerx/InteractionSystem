@@ -34,7 +34,8 @@ interactable - component, collider, layer and settings included.
 - **Two ways to react**: `UnityEvent`s on each `Interactable` for no-code wiring, and allocation-free
   `EventManager` events (`FocusEvent`, `InteractEvent`...) for code
 - **Ready-made prompt UI** with [UniMVC](https://github.com/fatihgezerx/UniMVC) (optional): a popup that
-  shows the focused object's name, added to your MVC folder on its own (see [UI](#ui))
+  shows the focused object's name, added to your MVC folder on its own (see [UI](#ui)) - and, with
+  [Easy UI](https://github.com/fatihgezerx/EasyUI) (optional), designed there and set up by roles
 - **Scene view gizmo**: the line or sphere is drawn yellow while nothing is detected, green while
   something is
 - Drag-to-reorder interactables in the Inspector
@@ -52,6 +53,7 @@ interactable - component, collider, layer and settings included.
 | **The new Input System** (1.8 or newer, for project-wide actions) | The `Interact` action |
 | [UniMVC](https://github.com/fatihgezerx/UniMVC) (optional) | The ready-made interaction prompt (see [UI](#ui)) |
 | [LocalizationSystem](https://github.com/fatihgezerx/LocalizationSystem) (optional) | Translating object names (see [Localization](#localization)) |
+| [Easy UI](https://github.com/fatihgezerx/EasyUI) (optional) | Designing the prompt and building it set up (see [UI](#ui)) |
 
 ### Installation
 
@@ -184,8 +186,23 @@ they never cause errors.
 | `Popups/InteractionPopup` | `PopupViewBase` | The prompt: filled with the focused object and shown on focus, hidden on lose focus |
 | `Texts/InteractionText` | `TextViewBase` | The prompt's label: the object's Name (`Take Battery`), translated with LocalizationSystem |
 | `Sliders/InteractionSlider` | `SliderViewBase` | The hold progress: shown only for Holding objects, fills from 0 to 1 over their Duration |
+| `Popups/Editor/InteractionUIRoles` | - | With Easy UI: the roles below, and the setup of a panel built with them |
 
-**Setup:**
+**Setup with [Easy UI](https://github.com/fatihgezerx/EasyUI):** design the prompt in `Tools > Easy UI` and
+mark its elements with roles (**Add Role > Interaction**):
+
+| Role | On | Becomes |
+|---|---|---|
+| Interaction Popup | the box (an Empty or Image; can be the panel's root) | `InteractionPopup` |
+| Interaction Text | a Text inside it | `InteractionText` (can't also be a Localized Text: it translates itself) |
+| Interaction Slider | a Slider inside it (optional) | `InteractionSlider` |
+
+Save it, then build it with **GameObject > UI (Canvas) > Easy UI > your panel**. The views are added, the
+popup is left inactive and never catches the pointer, the slider isn't draggable, the canvas gets a
+`UIManager` and an `InteractionController`, and every view is listed where it belongs - nothing to wire by
+hand.
+
+**Setup by hand:**
 
 1. Put `InteractionController` on the Canvas that has the `UIManager`.
 2. Create the popup under the Canvas: an object with `InteractionPopup`, and inside it a TextMeshPro text
@@ -227,7 +244,8 @@ your own code, show
 
 It is optional: without LocalizationSystem, InteractionSystem compiles and shows the Names as written.
 Install it later and the Names become translatable on their own, no change needed. `InteractionText`
-keeps its object marked with `ExcludeFromLocalization`, since its text is filled by code.
+tells **Sync Project** that its code fills its label (LocalizationSystem's `ILocalizedByCode`), so the label
+gets no `LocalizedText` that would overwrite it - and nothing is added to its object.
 
 ## Holding
 
