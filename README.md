@@ -120,9 +120,16 @@ is then available from the three-dots menu of the Interact Data (`Compile`).
     skips, duplicates and prefabs that differ. The **Outline** card holds Show Outline, Color and Width.
   - **Detection**: Shape (Line / Sphere), Reach, Check interval and Raycast layers, with hints for an empty layer mask.
   - **Origin**: Origin tag (a tag dropdown), start from a child plus its index, and the local position / rotation.
+- **Customise it.** The Interact Data Inspector is drawn from a default design that Interaction System ships (tabs, cards, fields, notes). With Veneer installed, open `Tools > Veneer > Inspector Designer` and drop the
+  `InteractData` script into it: the system's design is shown read-only; press **Customize** to make your own copy (in `Assets/Veneer Layouts/`) and change titles, icons, the banner, the theme, the cards and where the
+  fields sit. **Reset to system default** returns to the shipped design. The state pill, the checks, the Outline System check, the prefab list and the **Compile** button are *system items*: you can move or hide them
+  (Compile is also in the three-dots menu), but what they do stays in the system's code.
 - The primary **Compile** button under the tabs does what it always did.
 - **Interactable** shows a Press / Hold pill, the prompt written by Compile (read only), the On Focus / On Interact /
-  On Lose Focus events, and hints for a missing collider or a layer other than `Interact`.
+  On Lose Focus events, and hints for a missing collider or a layer other than `Interact`. It is drawn from a default
+  layout too (a Prompt card and an Events card): drop the `Interactable` script into `Tools > Veneer > Inspector Designer`
+  and use **Customize** / **Reset to system default** as above. The Press / Hold pill, the prompt hints and the collider /
+  layer checks are system items: they can be moved or hidden, not changed.
 
 `Line` never sees through anything: if an object that isn't on Raycast Layers (a wall) is in front
 of an interactable, nothing is detected. `Sphere` detects every interactable within Radius, walls or

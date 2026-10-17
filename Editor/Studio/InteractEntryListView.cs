@@ -124,9 +124,14 @@ namespace InteractionSystem
             nameField.tooltip = nameProperty.tooltip;
             nameField.style.flexGrow = 1f;
             nameField.style.flexShrink = 1f;
+            nameField.style.minWidth = 0f;
             nameField.style.marginLeft = 0f;
             nameField.style.marginRight = 0f;
             Label pill = VeneerStyle.Pill(string.Empty, "idle");
+
+            // The state pill keeps its width and a gap to the field, so a long name or a narrow Inspector never runs under it.
+            pill.style.flexShrink = 0f;
+            pill.style.marginLeft = 8f;
             VisualElement nameControl = VeneerStyle.Row();
             nameControl.Add(nameField);
             nameControl.Add(pill);
