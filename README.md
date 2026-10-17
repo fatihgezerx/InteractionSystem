@@ -39,9 +39,6 @@ interactable - component, collider, layer and settings included.
 - **Scene view gizmo**: the line or sphere is drawn yellow while nothing is detected, green while
   something is
 - Drag-to-reorder interactables in the Inspector
-- **Optional outline** with [OutlineSystem](https://github.com/fatihgezerx/OutlineSystem): turn on
-  **Show Outline** and the focused object is outlined the moment it's detected, and the outline is
-  gone the moment it loses focus (see [Outline](#outline))
 
 ## Setup
 
@@ -57,7 +54,6 @@ interactable - component, collider, layer and settings included.
 | [UniMVC](https://github.com/fatihgezerx/UniMVC) (optional) | The ready-made interaction prompt (see [UI](#ui)) |
 | [LocalizationSystem](https://github.com/fatihgezerx/LocalizationSystem) (optional) | Translating object names (see [Localization](#localization)) |
 | [Easy UI](https://github.com/fatihgezerx/EasyUI) (optional) | Designing the prompt and building it set up (see [UI](#ui)) |
-| [OutlineSystem](https://github.com/fatihgezerx/OutlineSystem) (optional) | Outlining the focused object (see [Outline](#outline)) |
 
 ### Installation
 
@@ -108,6 +104,25 @@ blocks: **INTERACT SETTINGS** and **INTERACTABLES**.
 | Interactables | The prefabs. Each has a **Name** (the prompt shown for it, empty = the prefab's name) and **Holding** / **Duration** |
 
 ![Interact Data inspector with its settings and its interactables](ScreenShots/Inspector.png)
+
+### In the editor
+
+With [Veneer](https://github.com/fatihgezerx/Veneer) in the project (the setup dialog offers to
+install it; it is optional), the Interact Data and the `Interactable` component get the studio look in the amber
+Interaction System colour. Without the kit, Unity's default Inspectors are used and everything still works; **Compile**
+is then available from the three-dots menu of the Interact Data (`Compile`).
+
+- **Interact Data** has a header card with a state pill (*All compiled*, *n to compile*, *n issues*) and three tabs:
+  - **Interactables**: the prefab list. Each row shows the prefab (with a thumbnail), the Name (empty falls back to the
+    prefab's name, shown as the placeholder), a *Hold to interact* chip and, while it is on, the Duration. Each row has
+    a pill: *Compiled*, *Needs Compile*, *No prefab*, *Not a prefab* or *Duplicate*. Drag to reorder; the `+` / `-`
+    buttons add (with fresh defaults) and remove the selected rows. Below the list: hints for entries Compile
+    skips, duplicates and prefabs that differ. The **Outline** card holds Show Outline, Color and Width.
+  - **Detection**: Shape (Line / Sphere), Reach, Check interval and Raycast layers, with hints for an empty layer mask.
+  - **Origin**: Origin tag (a tag dropdown), start from a child plus its index, and the local position / rotation.
+- The primary **Compile** button under the tabs does what it always did.
+- **Interactable** shows a Press / Hold pill, the prompt written by Compile (read only), the On Focus / On Interact /
+  On Lose Focus events, and hints for a missing collider or a layer other than `Interact`.
 
 `Line` never sees through anything: if an object that isn't on Raycast Layers (a wall) is in front
 of an interactable, nothing is detected. `Sphere` detects every interactable within Radius, walls or
@@ -223,22 +238,6 @@ soon as the key is released or the object loses focus.
 
 The popup can also sit inside another panel's list, but if it is inside that panel in the hierarchy
 too, it only becomes visible while that panel is open.
-
-## Outline
-
-With [OutlineSystem](https://github.com/fatihgezerx/OutlineSystem) in the project, turn on **Show
-Outline** in `InteractData`'s INTERACT SETTINGS to highlight the focused object: **Outline Color** and
-**Outline Width** configure it. **Compile** then adds an `Outline` component to every listed prefab and
-writes those two values onto it, the same way it writes Name and Holding onto `Interactable`; recompiling
-after a color/width change updates only the prefabs that are out of date.
-
-`InteractionManager` calls `Outline.Show()` on the newly focused object and `Outline.Hide()` on the one
-that lost focus - the same moment `FocusEvent`/`LoseFocusEvent` fire. `Outline` never touches the object's
-own material, so whatever shader it already uses stays untouched; if a listed prefab has no
-`MeshRenderer`/`SkinnedMeshRenderer` on itself or its children, `Show()`/`Hide()` simply do nothing.
-
-It is optional: without OutlineSystem, **Show Outline** still shows in the Inspector but Compile skips
-it (with a warning), and the outline calls in `InteractionManager` compile to nothing.
 
 ## Pausing
 

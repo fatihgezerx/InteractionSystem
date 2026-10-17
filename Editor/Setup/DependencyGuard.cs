@@ -50,6 +50,7 @@ namespace InteractionSystem.Setup
             Dependency.Repository("Localization System", "LocalizationSystem.Runtime", "HAS_LOCALIZATION_SYSTEM", "https://github.com/fatihgezerx/LocalizationSystem", "Assets/Scripts/LocalizationSystem", "for translating object names"),
             Dependency.Repository("Easy UI", "EasyUI.Editor", "HAS_EASYUI", "https://github.com/fatihgezerx/EasyUI", "Assets/Scripts/EasyUI", "for the Interaction Popup, Text and Slider roles in Easy UI"),
             Dependency.Repository("Outline System", "OutlineSystem.Runtime", "HAS_OUTLINE_SYSTEM", "https://github.com/fatihgezerx/OutlineSystem", "Assets/Scripts/OutlineSystem", "for showing an outline on the focused object when Show Outline is on"),
+            Dependency.Repository("Veneer", "Veneer.Editor", "HAS_VENEER", "https://github.com/fatihgezerx/Veneer", "Assets/Scripts/Veneer", "for the studio-style Inspectors (without it Unity's default Inspectors are used)"),
         };
 
         private static AddAndRemoveRequest _packageRequest;

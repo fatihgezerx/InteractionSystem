@@ -1,0 +1,17 @@
+/* Exact amber accent (#F5A524) of Interaction System. The selectors repeat the kit's accent-preset selectors on purpose: a
+   single ".vn-root" rule has lower specificity than ".vn-root.vn-accent--amber" and would lose to it. */
+.vn-root,
+.vn-root.vn-accent--amber {
+    --vn-accent: #F5A524;
+    --vn-accent-soft: rgba(245, 165, 36, 0.16);
+    --vn-accent-line: rgba(245, 165, 36, 0.55);
+    --vn-pressed: rgba(245, 165, 36, 0.24);
+}
+
+.vn-root.vn-root--light,
+.vn-root.vn-root--light.vn-accent--amber {
+    --vn-accent: #B87500;
+    --vn-accent-soft: rgba(184, 117, 0, 0.14);
+    --vn-accent-line: rgba(184, 117, 0, 0.60);
+    --vn-pressed: rgba(184, 117, 0, 0.22);
+}
