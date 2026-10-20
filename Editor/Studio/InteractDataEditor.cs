@@ -5,7 +5,7 @@ namespace InteractionSystem
 {
     /// <summary>
     /// Studio-look Inspector for <see cref="InteractData"/>, drawn from a Veneer layout: the project's own copy made in the Inspector
-    /// Designer when there is one, otherwise <see cref="InteractDataDefaultLayout"/> (tabs Interactables, Detection and Origin). The
+    /// Designer when there is one, otherwise <see cref="InteractDataDefaultLayout"/> (tabs Detection, Origin and Interactables). The
     /// state pill, the checks and the Compile button are custom items (<see cref="InteractDataItems"/>). Only a selection of several
     /// assets is built here: a header, a hint and the Compile button.
     /// </summary>

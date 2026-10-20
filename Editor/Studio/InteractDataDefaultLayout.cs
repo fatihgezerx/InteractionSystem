@@ -4,8 +4,8 @@ using Veneer;
 namespace InteractionSystem
 {
     /// <summary>
-    /// The design of the <see cref="InteractData"/> Inspector that Interaction System ships: three tabs (Interactables, Detection,
-    /// Origin), their cards and fields, notes that show or hide with the fields they explain, and the system's own items (state pill,
+    /// The design of the <see cref="InteractData"/> Inspector that Interaction System ships: three tabs (Detection, Origin,
+    /// Interactables), their cards and fields, notes that show or hide with the fields they explain, and the system's own items (state pill,
     /// Interactable checks, Outline System check, Compile button). With Veneer installed a project can copy it in the Inspector Designer
     /// and change the copy; this default is never saved as an asset.
     /// </summary>
@@ -29,21 +29,11 @@ namespace InteractionSystem
         public VeneerLayout CreateLayout()
         {
             VeneerLayout layout = new VeneerLayoutBuilder(typeof(InteractData), "Interact Data", "Detection and interactables")
-                .Page("Interactables", "list")
-                .Card("Interactables", "list")
-                .Note(NameInfo)
-                .Field("interactables")
-                .Custom(InteractDataItems.ChecksId)
-                .Custom(InteractDataItems.StateId)
-                .Custom(InteractDataItems.CompileId)
-                .Card("Outline", "overlay")
-                .Field(GeneralSettings + "showOutline", "Show outline", widget: VeneerWidget.Toggle)
-                .Custom(InteractDataItems.OutlineMissingId)
-                .Field(GeneralSettings + "outlineColor", "Color", widget: VeneerWidget.Color)
-                .ShowIf(GeneralSettings + "showOutline", VeneerCondition.IsTrue)
-                .Slider(GeneralSettings + "outlineWidth", "Width", "Thin", "Thick")
-                .ShowIf(GeneralSettings + "showOutline", VeneerCondition.IsTrue)
                 .Page("Detection", "target")
+                .Card("Layers", "layers")
+                .Field(GeneralSettings + "raycastLayers", "Raycast layers")
+                .Note("No layer is selected: nothing will be detected.", VeneerNoteKind.Warning)
+                .ShowIf(GeneralSettings + "raycastLayers", VeneerCondition.IsEmpty)
                 .Card("Shape", "target")
                 .Enum(GeneralSettings + "raycastType", "Shape", "arrow-right,sphere")
                 .Note("Line never sees through anything: a wall in front of an interactable (on a layer that is not in Raycast layers) blocks it.")
@@ -52,10 +42,13 @@ namespace InteractionSystem
                 .ShowIf(GeneralSettings + "raycastType", VeneerCondition.Equals, "Sphere")
                 .Slider(GeneralSettings + "radius", "Reach", "Short", "Long", "m")
                 .Slider(GeneralSettings + "checkInterval", "Check interval", "Fast", "Relaxed", "s")
-                .Card("Layers", "layers")
-                .Field(GeneralSettings + "raycastLayers", "Raycast layers")
-                .Note("No layer is selected: nothing will be detected.", VeneerNoteKind.Warning)
-                .ShowIf(GeneralSettings + "raycastLayers", VeneerCondition.IsEmpty)
+                .Card("Outline", "overlay")
+                .Field(GeneralSettings + "showOutline", "Show outline", widget: VeneerWidget.Toggle)
+                .Custom(InteractDataItems.OutlineMissingId)
+                .Field(GeneralSettings + "outlineColor", "Color", widget: VeneerWidget.Color)
+                .ShowIf(GeneralSettings + "showOutline", VeneerCondition.IsTrue)
+                .Slider(GeneralSettings + "outlineWidth", "Width", "Thin", "Thick")
+                .ShowIf(GeneralSettings + "showOutline", VeneerCondition.IsTrue)
                 .Page("Origin", "anchor")
                 .Card("Origin object", "anchor")
                 .Field(GeneralSettings + "originTag", "Origin tag", widget: VeneerWidget.Tag)
@@ -67,6 +60,13 @@ namespace InteractionSystem
                 .Card("Offset", "move")
                 .Field(GeneralSettings + "localPosition", "Local position", widget: VeneerWidget.Vector)
                 .Field(GeneralSettings + "localRotation", "Local rotation", widget: VeneerWidget.Vector)
+                .Page("Interactables", "list")
+                .Card("Interactables", "list")
+                .Note(NameInfo)
+                .Field("interactables")
+                .Custom(InteractDataItems.ChecksId)
+                .Custom(InteractDataItems.StateId)
+                .Custom(InteractDataItems.CompileId)
                 .Build();
 
             // The segmented Shape buttons have icons only, so the explanation of both shapes goes on the row.
